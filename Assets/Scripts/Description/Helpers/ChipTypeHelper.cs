@@ -15,7 +15,7 @@ namespace DLS.Description
 			{ ChipType.Pulse, "PULSE" },
 			{ ChipType.TriStateBuffer, "3-STATE BUFFER" },
 			// ---- Memory ----
-			{ ChipType.dev_Ram_8Bit, "dev.RAM-8" },
+			{ ChipType.dev_Ram_8Bit, "RAM-8" },
 			{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },
             { ChipType.EEPROM_256x16, $"EEPROM 256{mulSymbol}16" },
 			// ---- Split / Merge ----

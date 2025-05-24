@@ -85,7 +85,7 @@ namespace DLS.SaveSystem
 
 			if (!Directory.Exists(chipDirectoryPath) && loadedChips.Length > 0) throw new DirectoryNotFoundException(chipDirectoryPath);
 
-			ChipDescription[] builtinChips = BuiltinChipCreator.CreateAllBuiltinChipDescriptions();
+			ChipDescription[] builtinChips = BuiltinChipCreator.CreateAllBuiltinChipDescriptions(projectDescription);
 			HashSet<string> customChipNameHashset = new(ChipDescription.NameComparer);
 
 			for (int i = 0; i < loadedChips.Length; i++)

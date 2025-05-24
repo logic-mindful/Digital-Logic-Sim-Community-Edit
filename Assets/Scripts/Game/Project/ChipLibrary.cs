@@ -19,7 +19,7 @@ namespace DLS.Game
 			foreach (ChipDescription chip in builtinChips)
 			{
 				// Bus terminus chip should not be shown to the user (it is created automatically upon placement of a bus start point)
-				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType) || chip.ChipType == ChipType.dev_Ram_8Bit;
+				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType);
 
 				AddChipToLibrary(chip, hidden);
 				builtinChipNames.Add(chip.Name);
