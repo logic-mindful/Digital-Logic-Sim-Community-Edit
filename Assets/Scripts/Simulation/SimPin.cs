@@ -1,3 +1,4 @@
+using DLS.Description;
 using System;
 
 namespace DLS.Simulation
@@ -7,6 +8,7 @@ namespace DLS.Simulation
 		public readonly int ID;
 		public readonly SimChip parentChip;
 		public readonly bool isInput;
+		public readonly PinBitCount numberOfBits;
 		public uint State;
 
 		public SimPin[] ConnectedTargetPins = Array.Empty<SimPin>();
@@ -23,10 +25,11 @@ namespace DLS.Simulation
 		public int numInputConnections;
 		public int numInputsReceivedThisFrame;
 
-		public SimPin(int id, bool isInput, SimChip parentChip)
+		public SimPin(int id, bool isInput, PinBitCount numberOfBits, SimChip parentChip)
 		{
 			this.parentChip = parentChip;
 			this.isInput = isInput;
+			this.numberOfBits = numberOfBits;
 			ID = id;
 			latestSourceID = -1;
 			latestSourceParentChipID = -1;

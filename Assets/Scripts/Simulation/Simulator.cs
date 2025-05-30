@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
 using DLS.Description;
 using DLS.Game;
@@ -9,6 +10,15 @@ namespace DLS.Simulation
 {
 	public static class Simulator
 	{
+		// Constants, for when a chip should be cached. If a chip is purely combinational and has at most AUTO_CACHING number of input bits, it will always be cached.
+		// Otherwise, a user can specifie a chip to be cached, if the chip is combinational and has at most USER_CACHING number of input bits.
+		// If a chip has more than USER_CACHING input bits, it will never be cached. (This is, because memory requirements grow exponentially with number of input bits.)
+		public const int MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING = 16;
+		public const int MAX_NUM_INPUT_BITS_WHEN_USER_CACHING = 24;
+
+		// Small, purely combinational chips use a LUT for fast calculations. These are stored here. Maps the name of a chip to its LUT.
+		public static readonly Dictionary<string, uint[][]> combinationalChipCaches = new();
+
 		public static readonly Random rng = new();
 		static readonly Stopwatch stopwatch = Stopwatch.StartNew();
 		public static int stepsPerClockTransition;
@@ -75,11 +85,18 @@ namespace DLS.Simulation
 					// Possible for sim to be temporarily out of sync since running on separate threads, so just ignore failure to find pin.
 				}
 			}
-
+			
 			// Process
 			if (needsOrderPass)
 			{
 				StepChipReorder(rootSimChip);
+
+				UnityEngine.Debug.Log("Full Recalculation");
+
+				combinationalChipCaches.Clear();
+				ClearAllCachedFlags(rootSimChip);
+				RecalculateCachedLUTs(rootSimChip);
+
 				needsOrderPass = false;
 			}
 			else
@@ -133,8 +150,19 @@ namespace DLS.Simulation
 					}
 				}
 
-				if (nextSubChip.IsBuiltin) ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly
-				else StepChip(nextSubChip); // Recursively process custom chip
+				if (nextSubChip.IsBuiltin)
+				{
+					ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly
+				}
+				else if (nextSubChip.isCached)
+				{
+					bool wasSuccessful = ProcessCachedChip(nextSubChip); // We found a cached chip, so use LUT to process it directly
+					if (!wasSuccessful) StepChip(nextSubChip); // Fallback to normal simulation, if lookup failed
+				}
+				else
+				{ 
+					StepChip(nextSubChip); // Recursively process custom chip
+				}
 
 				// Step 3) Forward the outputs of the processed subchip to connected pins
 				nextSubChip.Sim_PropagateOutputs();
@@ -171,6 +199,91 @@ namespace DLS.Simulation
 			}
 		}
 
+		static void ClearAllCachedFlags(SimChip chip)
+		{
+			chip.isCached = false;
+			foreach (SimChip subChip in chip.SubChips)
+			{
+				ClearAllCachedFlags(subChip);
+			}
+		}
+
+		// Recalculates the caches for all cachable subChips of the passed chip.
+		static void RecalculateCachedLUTs(SimChip chip)
+		{
+			UnityEngine.Debug.Log("recalculating subchips of " + chip.Name);
+
+			foreach (SimChip subChip in chip.SubChips)
+			{
+				// Skip this subChip, if it has already been visited in this recalculation phase
+				if (combinationalChipCaches.ContainsKey(subChip.Name)) continue;
+
+				// Recalculate caches for the subChips of subChip recursively
+				// No eplicit base case is necessary, since the build in chips don't have any subChips (and therefor don't enter the foreach loop)
+				RecalculateCachedLUTs(subChip);
+
+				UnityEngine.Debug.Log(subChip.Name + subChip.IsCombinational());
+
+				// Don't cache this subChip, if it isn't cachable
+				if (subChip.ChipType != ChipType.Custom) continue;
+				if (!subChip.shouldBeCached && subChip.CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING) continue;
+				if (!subChip.IsCombinational()) continue;
+
+				// Buffer current Input
+				uint[] bufferedInput = new uint[subChip.InputPins.Length];
+				for (int i = 0; i < bufferedInput.Length; i++)
+				{
+					bufferedInput[i] = subChip.InputPins[i].State;
+				}
+
+				// Cache this subChip
+				int numberOfPossibleInputs = 1 << subChip.CalculateNumberOfInputBits();
+				uint[][] LUT = new uint[numberOfPossibleInputs][];
+				for (int input = 0; input < numberOfPossibleInputs; input++)
+				{
+					subChip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
+					// Set all inputPins to their part of the input
+					int tempInput = input;
+					for (int i = 0; i < subChip.InputPins.Length; i++)
+					{
+						uint mask = ((uint)1 << (int)subChip.InputPins[i].numberOfBits) - 1;
+						subChip.InputPins[i].State = (uint)(tempInput & mask);
+						tempInput >>= (int)subChip.InputPins[i].numberOfBits;
+					}
+					StepChip(subChip); // Calculate Result
+
+					// Store output into cache
+					int numberOfOutputPins = subChip.OutputPins.Length;
+					uint[] outputs = new uint[numberOfOutputPins];
+					for (int i = 0; i < numberOfOutputPins; i++)
+					{
+						outputs[i] = subChip.OutputPins[i].State;
+					}
+					LUT[input] = outputs;
+				}
+				combinationalChipCaches[subChip.Name] = LUT;
+
+				UnityEngine.Debug.Log("LUT of " + subChip.Name);
+				int rowNumber = 0;
+				foreach (uint[] row in LUT)
+				{
+					string rowContents = string.Join(", ", row);
+					UnityEngine.Debug.Log("input " + rowNumber + ": " + rowContents);
+					rowNumber++;
+				}
+
+				// Reload buffered Input
+				subChip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
+				for (int i = 0; i < bufferedInput.Length; i++)
+				{
+					subChip.InputPins[i].State = bufferedInput[i];
+				}
+				StepChip(subChip); // make sure the outputs are also correct again
+
+				subChip.isCached = true;
+			}
+		}
+		
 		static int ChooseNextSubChip(SimChip[] subChips, int num)
 		{
 			bool noSubChipsReady = true;
@@ -221,6 +334,25 @@ namespace DLS.Simulation
 			uint result = ((pcg_rngState >> (int)((pcg_rngState >> 28) + 4)) ^ pcg_rngState) * 277803737;
 			result = (result >> 22) ^ result;
 			return result < uint.MaxValue / 2;
+		}
+
+		// Sets the output pins by using an LUT. Returns true if successful, false otherwise.
+		static bool ProcessCachedChip(SimChip chip)
+		{
+			int input = 0;
+			for (int i = chip.InputPins.Length - 1; i >= 0; i--)
+			{
+				if (chip.InputPins[i].State >> 16 != 0) return false; // Fails if at least one input is in TriState (as these are not cached)
+				input <<= (int)chip.InputPins[i].numberOfBits;
+				input |= (int)chip.InputPins[i].State;
+			}
+			uint[][] LUT = combinationalChipCaches[chip.Name];
+			uint[] outputs = LUT[input];
+			for (int i = 0; i < outputs.Length; i++)
+			{
+				chip.OutputPins[i].State = outputs[i];
+			}
+			return true;
 		}
 
 		static void ProcessBuiltinChip(SimChip chip)
@@ -557,13 +689,13 @@ namespace DLS.Simulation
 			return simChip;
 		}
 
-		public static void AddPin(SimChip simChip, int pinID, bool isInputPin)
+		public static void AddPin(SimChip simChip, int pinID, bool isInputPin, PinBitCount numberOfBits)
 		{
 			SimModifyCommand command = new()
 			{
 				type = SimModifyCommand.ModificationType.AddPin,
 				modifyTarget = simChip,
-				simPinToAdd = new SimPin(pinID, isInputPin, simChip),
+				simPinToAdd = new SimPin(pinID, isInputPin, numberOfBits, simChip),
 				pinIsInputPin = isInputPin
 			};
 			modificationQueue.Enqueue(command);

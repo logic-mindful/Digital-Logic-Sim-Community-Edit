@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
 
@@ -8,6 +9,7 @@ namespace DLS.Simulation
 	{
 		public readonly ChipType ChipType;
 		public readonly int ID;
+		public readonly string Name;
 
 		// Some builtin chips, such as RAM, require an internal state for memory
 		// (can also be used for other arbitrary chip-specific data)
@@ -15,6 +17,8 @@ namespace DLS.Simulation
 		public readonly bool IsBuiltin;
 		public SimPin[] InputPins = Array.Empty<SimPin>();
 		public int numConnectedInputs;
+		public bool shouldBeCached; // True, if the user specifically wanted this chip to be cached
+		public bool isCached; // True for cached chips, whose outputs get determined by a LUT
 
 		public int numInputsReady;
 		public SimPin[] OutputPins = Array.Empty<SimPin>();
@@ -30,6 +34,7 @@ namespace DLS.Simulation
 		{
 			SubChips = subChips;
 			ID = id;
+			Name = desc.Name;
 			ChipType = desc.ChipType;
 			IsBuiltin = ChipType != ChipType.Custom;
 
@@ -82,6 +87,121 @@ namespace DLS.Simulation
 			{
 				InternalState = new uint[internalState.Length];
 				UpdateInternalState(internalState);
+			}
+		}
+
+		// Returns true, when this chip is purely combinational / stateless. This is the case, when the outputs of this chip depend entirely on the inputs and on nothing else.
+		public bool IsCombinational()
+		{
+			// Handle built in chips
+			switch (ChipType)
+			{
+				case ChipType.Nand:
+				case ChipType.TriStateBuffer:
+				case ChipType.Merge_1To4Bit:
+				case ChipType.Merge_1To8Bit:
+				case ChipType.Merge_4To8Bit:
+				case ChipType.Split_4To1Bit:
+				case ChipType.Split_8To4Bit:
+				case ChipType.Split_8To1Bit:
+					return true;
+				case ChipType.Clock:
+				case ChipType.Pulse:
+				case ChipType.dev_Ram_8Bit:
+				case ChipType.Rom_256x16:
+				case ChipType.SevenSegmentDisplay:
+				case ChipType.DisplayRGB:
+				case ChipType.DisplayDot:
+				case ChipType.DisplayLED:
+				case ChipType.Key:
+				case ChipType.Buzzer:
+					return false;
+			}
+
+			// Chip isn't combinational, if any of the inputPins has more than one connection
+			foreach (SimPin inputPin in InputPins)
+			{
+				if (inputPin.numInputConnections > 1) return false;
+			}
+
+			// Can only be combinational if all subchips are combinational
+			foreach (SimChip subChip in SubChips)
+			{
+				// recursively make sure, that subchip is combinational
+				if (!subChip.IsCombinational()) return false;
+			}
+
+			// Check for loops in wiring using DFS
+			HashSet<int> visited = new();
+			HashSet<int> recStack = new();
+
+			bool Dfs(SimChip chip)
+			{
+				if (!visited.Add(chip.ID))
+					return false;
+
+				recStack.Add(chip.ID);
+
+				foreach (SimPin output in chip.OutputPins)
+				{
+					foreach (SimPin connectedPin in output.ConnectedTargetPins)
+					{
+						SimChip neighbor = connectedPin.parentChip;
+						if (neighbor == null || neighbor == chip) continue;
+
+						if (!visited.Contains(neighbor.ID))
+						{
+							if (Dfs(neighbor))
+								return true;
+						}
+						else if (recStack.Contains(neighbor.ID))
+						{
+							// Cycle detected
+							return true;
+						}
+					}
+				}
+
+				recStack.Remove(chip.ID);
+				return false;
+			}
+
+			// Run DFS from all subchips, in case some are disconnected
+			foreach (SimChip subChip in SubChips)
+			{
+				if (!visited.Contains(subChip.ID))
+				{
+					if (Dfs(subChip))
+						return false; // Cycle found
+				}
+			}
+
+			return true;
+		}
+
+		public int CalculateNumberOfInputBits()
+		{
+			int numberOfBits = 0;
+			foreach (SimPin pin in InputPins)
+			{
+				numberOfBits += (int)pin.numberOfBits;
+			}
+			return numberOfBits;
+		}
+
+		public void ResetReceivedFlagsOnAllPins()
+		{
+			foreach(SimPin pin in InputPins)
+			{
+				pin.numInputsReceivedThisFrame = 0;
+			}
+			foreach (SimPin pin in OutputPins)
+			{
+				pin.numInputsReceivedThisFrame = 0;
+			}
+			foreach (SimChip subChip in SubChips)
+			{
+				subChip.ResetReceivedFlagsOnAllPins();
 			}
 		}
 
@@ -218,7 +338,7 @@ namespace DLS.Simulation
 			}
 		}
 
-		static SimPin CreateSimPinFromDescription(PinDescription desc, bool isInput, SimChip parent) => new(desc.ID, isInput, parent);
+		static SimPin CreateSimPinFromDescription(PinDescription desc, bool isInput, SimChip parent) => new(desc.ID, isInput, desc.BitCount, parent);
 
 		public void RemovePin(int removePinID)
 		{
