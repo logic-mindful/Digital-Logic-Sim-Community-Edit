@@ -13,11 +13,12 @@ namespace DLS.Simulation
 		// Constants, for when a chip should be cached. If a chip is purely combinational and has at most AUTO_CACHING number of input bits, it will always be cached.
 		// Otherwise, a user can specifie a chip to be cached, if the chip is combinational and has at most USER_CACHING number of input bits.
 		// If a chip has more than USER_CACHING input bits, it will never be cached. (This is, because memory requirements grow exponentially with number of input bits.)
-		public const int MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING = 16;
+		public const int MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING = 12;
 		public const int MAX_NUM_INPUT_BITS_WHEN_USER_CACHING = 24;
 
 		// Small, purely combinational chips use a LUT for fast calculations. These are stored here. Maps the name of a chip to its LUT.
 		public static readonly Dictionary<string, uint[][]> combinationalChipCaches = new();
+		public static readonly HashSet<string> chipsKnowToNotBeCombinational = new();
 
 		public static readonly Random rng = new();
 		static readonly Stopwatch stopwatch = Stopwatch.StartNew();
@@ -91,9 +92,8 @@ namespace DLS.Simulation
 			{
 				StepChipReorder(rootSimChip);
 
-				UnityEngine.Debug.Log("Full Recalculation");
-
 				combinationalChipCaches.Clear();
+				chipsKnowToNotBeCombinational.Clear();
 				ClearAllCachedFlags(rootSimChip);
 				RecalculateCachedLUTs(rootSimChip);
 
@@ -211,23 +211,23 @@ namespace DLS.Simulation
 		// Recalculates the caches for all cachable subChips of the passed chip.
 		static void RecalculateCachedLUTs(SimChip chip)
 		{
-			UnityEngine.Debug.Log("recalculating subchips of " + chip.Name);
-
 			foreach (SimChip subChip in chip.SubChips)
 			{
 				// Skip this subChip, if it has already been visited in this recalculation phase
-				if (combinationalChipCaches.ContainsKey(subChip.Name)) continue;
+				if (combinationalChipCaches.ContainsKey(subChip.Name) || chipsKnowToNotBeCombinational.Contains(subChip.Name)) continue;
 
 				// Recalculate caches for the subChips of subChip recursively
 				// No eplicit base case is necessary, since the build in chips don't have any subChips (and therefor don't enter the foreach loop)
 				RecalculateCachedLUTs(subChip);
 
-				UnityEngine.Debug.Log(subChip.Name + subChip.IsCombinational());
-
 				// Don't cache this subChip, if it isn't cachable
-				if (subChip.ChipType != ChipType.Custom) continue;
-				if (!subChip.shouldBeCached && subChip.CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING) continue;
-				if (!subChip.IsCombinational()) continue;
+				if (subChip.ChipType != ChipType.Custom
+					|| (!subChip.shouldBeCached && subChip.CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
+					|| !subChip.IsCombinational())
+				{
+					chipsKnowToNotBeCombinational.Add(subChip.Name);
+					continue;
+				}
 
 				// Buffer current Input
 				uint[] bufferedInput = new uint[subChip.InputPins.Length];
@@ -262,15 +262,6 @@ namespace DLS.Simulation
 					LUT[input] = outputs;
 				}
 				combinationalChipCaches[subChip.Name] = LUT;
-
-				UnityEngine.Debug.Log("LUT of " + subChip.Name);
-				int rowNumber = 0;
-				foreach (uint[] row in LUT)
-				{
-					string rowContents = string.Join(", ", row);
-					UnityEngine.Debug.Log("input " + rowNumber + ": " + rowContents);
-					rowNumber++;
-				}
 
 				// Reload buffered Input
 				subChip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input

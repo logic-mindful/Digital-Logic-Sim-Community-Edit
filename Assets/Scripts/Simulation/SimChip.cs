@@ -118,12 +118,15 @@ namespace DLS.Simulation
 					return false;
 			}
 
-			// Chip isn't combinational, if any of the inputPins has more than one connection
-			foreach (SimPin inputPin in InputPins)
+			// Chip isn't combinational, if any of the subChips inputPins has more than one connection
+			foreach (SimChip subChip in SubChips)
 			{
-				if (inputPin.numInputConnections > 1) return false;
+				foreach (SimPin inputPin in subChip.InputPins)
+				{
+					if (inputPin.numInputConnections > 1) return false;
+				}
 			}
-
+			
 			// Can only be combinational if all subchips are combinational
 			foreach (SimChip subChip in SubChips)
 			{
@@ -131,50 +134,59 @@ namespace DLS.Simulation
 				if (!subChip.IsCombinational()) return false;
 			}
 
-			// Check for loops in wiring using DFS
-			HashSet<int> visited = new();
-			HashSet<int> recStack = new();
-
-			bool Dfs(SimChip chip)
+			// Check for loops in wiring using topo sort
+			Dictionary<int, List<int>> graph = new();     // chipID -> list of dependent chipIDs
+			Dictionary<int, int> inDegree = new();        // chipID -> number of incoming edges
+			// Build Graph
+			foreach (SimChip chip in SubChips)
 			{
-				if (!visited.Add(chip.ID))
-					return false;
-
-				recStack.Add(chip.ID);
+				int chipID = chip.ID;
+				if (!graph.ContainsKey(chipID)) graph[chipID] = new List<int>();
+				if (!inDegree.ContainsKey(chipID)) inDegree[chipID] = 0;
 
 				foreach (SimPin output in chip.OutputPins)
 				{
-					foreach (SimPin connectedPin in output.ConnectedTargetPins)
+					foreach (SimPin target in output.ConnectedTargetPins)
 					{
-						SimChip neighbor = connectedPin.parentChip;
-						if (neighbor == null || neighbor == chip) continue;
+						SimChip targetChip = target.parentChip;
+						if (targetChip == null || targetChip.ID == chipID) continue;
 
-						if (!visited.Contains(neighbor.ID))
+						// Add edge: chip -> targetChip
+						if (!graph[chipID].Contains(targetChip.ID))
 						{
-							if (Dfs(neighbor))
-								return true;
-						}
-						else if (recStack.Contains(neighbor.ID))
-						{
-							// Cycle detected
-							return true;
+							graph[chipID].Add(targetChip.ID);
+
+							// Update in-degree for topological sort
+							if (!inDegree.ContainsKey(targetChip.ID)) inDegree[targetChip.ID] = 0;
+
+							inDegree[targetChip.ID]++;
 						}
 					}
 				}
-
-				recStack.Remove(chip.ID);
-				return false;
 			}
-
-			// Run DFS from all subchips, in case some are disconnected
-			foreach (SimChip subChip in SubChips)
+			// Run topo sort
+			Queue<int> zeroInDegree = new();
+			foreach (var kvp in inDegree)
 			{
-				if (!visited.Contains(subChip.ID))
+				if (kvp.Value == 0) zeroInDegree.Enqueue(kvp.Key);
+			}
+			int visitedCount = 0;
+			while (zeroInDegree.Count > 0)
+			{
+				int chipID = zeroInDegree.Dequeue();
+				visitedCount++;
+
+				if (!graph.ContainsKey(chipID)) continue;
+
+				foreach (int neighborID in graph[chipID])
 				{
-					if (Dfs(subChip))
-						return false; // Cycle found
+					inDegree[neighborID]--;
+					if (inDegree[neighborID] == 0) zeroInDegree.Enqueue(neighborID);
 				}
 			}
+
+			// If we couldn't visit all chips, a cycle exists
+			if (visitedCount != inDegree.Count) return false;
 
 			return true;
 		}
