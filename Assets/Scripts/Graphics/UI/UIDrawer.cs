@@ -1,4 +1,5 @@
 using DLS.Game;
+using DLS.Simulation;
 using Seb.Vis.UI;
 
 namespace DLS.Graphics
@@ -73,6 +74,7 @@ namespace DLS.Graphics
 				bool showSimPausedBanner = project.simPaused;
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
+				if (Simulator.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
 			}
 
 			ContextMenu.Update();

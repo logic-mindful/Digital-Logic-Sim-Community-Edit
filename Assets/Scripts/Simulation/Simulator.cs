@@ -20,6 +20,11 @@ namespace DLS.Simulation
 		public static readonly Dictionary<string, uint[][]> combinationalChipCaches = new();
 		public static readonly HashSet<string> chipsKnowToNotBeCombinational = new();
 
+		// Variables for the creating cache info popup
+		public static bool isCreatingACache = false;
+		public static string nameOfChipWhoseCacheIsBeingCreated;
+		public static float cacheCreatingProgress;
+
 		public static readonly Random rng = new();
 		static readonly Stopwatch stopwatch = Stopwatch.StartNew();
 		public static int stepsPerClockTransition;
@@ -229,6 +234,10 @@ namespace DLS.Simulation
 					continue;
 				}
 
+				nameOfChipWhoseCacheIsBeingCreated = subChip.Name;
+				cacheCreatingProgress = 0;
+				isCreatingACache = true;
+
 				// Buffer current Input
 				uint[] bufferedInput = new uint[subChip.InputPins.Length];
 				for (int i = 0; i < bufferedInput.Length; i++)
@@ -260,6 +269,8 @@ namespace DLS.Simulation
 						outputs[i] = subChip.OutputPins[i].State;
 					}
 					LUT[input] = outputs;
+
+					cacheCreatingProgress = (float)input / numberOfPossibleInputs;
 				}
 				combinationalChipCaches[subChip.Name] = LUT;
 
@@ -272,6 +283,8 @@ namespace DLS.Simulation
 				StepChip(subChip); // make sure the outputs are also correct again
 
 				subChip.isCached = true;
+
+				isCreatingACache = false;
 			}
 		}
 		
