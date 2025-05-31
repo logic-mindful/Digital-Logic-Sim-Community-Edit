@@ -18,7 +18,6 @@ namespace DLS.Simulation
 		public SimPin[] InputPins = Array.Empty<SimPin>();
 		public int numConnectedInputs;
 		public bool shouldBeCached; // True, if the user specifically wanted this chip to be cached
-		public bool isCached; // True for cached chips, whose outputs get determined by a LUT
 
 		public int numInputsReady;
 		public SimPin[] OutputPins = Array.Empty<SimPin>();

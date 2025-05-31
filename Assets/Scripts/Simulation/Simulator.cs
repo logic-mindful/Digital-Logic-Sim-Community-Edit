@@ -96,12 +96,6 @@ namespace DLS.Simulation
 			if (needsOrderPass)
 			{
 				StepChipReorder(rootSimChip);
-
-				combinationalChipCaches.Clear();
-				chipsKnowToNotBeCombinational.Clear();
-				ClearAllCachedFlags(rootSimChip);
-				RecalculateCachedLUTs(rootSimChip);
-
 				needsOrderPass = false;
 			}
 			else
@@ -159,13 +153,18 @@ namespace DLS.Simulation
 				{
 					ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly
 				}
-				else if (nextSubChip.isCached)
+				else if (combinationalChipCaches.ContainsKey(nextSubChip.Name))
 				{
 					bool wasSuccessful = ProcessCachedChip(nextSubChip); // We found a cached chip, so use LUT to process it directly
 					if (!wasSuccessful) StepChip(nextSubChip); // Fallback to normal simulation, if lookup failed
 				}
+				else if (!chipsKnowToNotBeCombinational.Contains(nextSubChip.Name))
+				{
+					RecalculateCachedLUTs(nextSubChip); // We found a chip that isn't cached but might be cachable, so we try to cache it
+					StepChip(nextSubChip);
+				}
 				else
-				{ 
+				{
 					StepChip(nextSubChip); // Recursively process custom chip
 				}
 
@@ -204,88 +203,77 @@ namespace DLS.Simulation
 			}
 		}
 
-		static void ClearAllCachedFlags(SimChip chip)
-		{
-			chip.isCached = false;
-			foreach (SimChip subChip in chip.SubChips)
-			{
-				ClearAllCachedFlags(subChip);
-			}
-		}
-
-		// Recalculates the caches for all cachable subChips of the passed chip.
+		// Recalculates the caches of this chip and and all of its subChips.
 		static void RecalculateCachedLUTs(SimChip chip)
 		{
+			// Skip this chip, if its cache status is already known
+			if (combinationalChipCaches.ContainsKey(chip.Name) || chipsKnowToNotBeCombinational.Contains(chip.Name)) return;
+
+			// Recalculate caches for the subChips of the passed chip recursively
 			foreach (SimChip subChip in chip.SubChips)
 			{
-				// Skip this subChip, if it has already been visited in this recalculation phase
-				if (combinationalChipCaches.ContainsKey(subChip.Name) || chipsKnowToNotBeCombinational.Contains(subChip.Name)) continue;
-
-				// Recalculate caches for the subChips of subChip recursively
-				// No eplicit base case is necessary, since the build in chips don't have any subChips (and therefor don't enter the foreach loop)
 				RecalculateCachedLUTs(subChip);
-
-				// Don't cache this subChip, if it isn't cachable
-				if (subChip.ChipType != ChipType.Custom
-					|| (!subChip.shouldBeCached && subChip.CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
-					|| !subChip.IsCombinational())
-				{
-					chipsKnowToNotBeCombinational.Add(subChip.Name);
-					continue;
-				}
-
-				nameOfChipWhoseCacheIsBeingCreated = subChip.Name;
-				cacheCreatingProgress = 0;
-				isCreatingACache = true;
-
-				// Buffer current Input
-				uint[] bufferedInput = new uint[subChip.InputPins.Length];
-				for (int i = 0; i < bufferedInput.Length; i++)
-				{
-					bufferedInput[i] = subChip.InputPins[i].State;
-				}
-
-				// Cache this subChip
-				int numberOfPossibleInputs = 1 << subChip.CalculateNumberOfInputBits();
-				uint[][] LUT = new uint[numberOfPossibleInputs][];
-				for (int input = 0; input < numberOfPossibleInputs; input++)
-				{
-					subChip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
-					// Set all inputPins to their part of the input
-					int tempInput = input;
-					for (int i = 0; i < subChip.InputPins.Length; i++)
-					{
-						uint mask = ((uint)1 << (int)subChip.InputPins[i].numberOfBits) - 1;
-						subChip.InputPins[i].State = (uint)(tempInput & mask);
-						tempInput >>= (int)subChip.InputPins[i].numberOfBits;
-					}
-					StepChip(subChip); // Calculate Result
-
-					// Store output into cache
-					int numberOfOutputPins = subChip.OutputPins.Length;
-					uint[] outputs = new uint[numberOfOutputPins];
-					for (int i = 0; i < numberOfOutputPins; i++)
-					{
-						outputs[i] = subChip.OutputPins[i].State;
-					}
-					LUT[input] = outputs;
-
-					cacheCreatingProgress = (float)input / numberOfPossibleInputs;
-				}
-				combinationalChipCaches[subChip.Name] = LUT;
-
-				// Reload buffered Input
-				subChip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
-				for (int i = 0; i < bufferedInput.Length; i++)
-				{
-					subChip.InputPins[i].State = bufferedInput[i];
-				}
-				StepChip(subChip); // make sure the outputs are also correct again
-
-				subChip.isCached = true;
-
-				isCreatingACache = false;
 			}
+
+			// Don't cache this chip, if it isn't cachable
+			if (chip.ChipType != ChipType.Custom
+				|| (!chip.shouldBeCached && chip.CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
+				|| !chip.IsCombinational())
+			{
+				chipsKnowToNotBeCombinational.Add(chip.Name);
+				return;
+			}
+
+			nameOfChipWhoseCacheIsBeingCreated = chip.Name;
+			cacheCreatingProgress = 0;
+			isCreatingACache = true;
+
+			// Buffer current Input
+			uint[] bufferedInput = new uint[chip.InputPins.Length];
+			for (int i = 0; i < bufferedInput.Length; i++)
+			{
+				bufferedInput[i] = chip.InputPins[i].State;
+			}
+
+			// Cache this chip
+			int numberOfPossibleInputs = 1 << chip.CalculateNumberOfInputBits();
+			uint[][] LUT = new uint[numberOfPossibleInputs][];
+			for (int input = 0; input < numberOfPossibleInputs; input++)
+			{
+				chip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
+				// Set all inputPins to their part of the input
+				int tempInput = input;
+				for (int i = 0; i < chip.InputPins.Length; i++)
+				{
+					uint mask = ((uint)1 << (int)chip.InputPins[i].numberOfBits) - 1;
+					chip.InputPins[i].State = (uint)(tempInput & mask);
+					tempInput >>= (int)chip.InputPins[i].numberOfBits;
+				}
+				StepChip(chip); // Calculate Result
+
+				// Store output into cache
+				int numberOfOutputPins = chip.OutputPins.Length;
+				uint[] outputs = new uint[numberOfOutputPins];
+				for (int i = 0; i < numberOfOutputPins; i++)
+				{
+					outputs[i] = chip.OutputPins[i].State;
+				}
+				LUT[input] = outputs;
+
+				cacheCreatingProgress = (float)input / numberOfPossibleInputs;
+				if (!isCreatingACache) return; // Cancel the caching, if something ordered the caching to be stopped
+			}
+			combinationalChipCaches[chip.Name] = LUT;
+
+			// Reload buffered Input
+			chip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
+			for (int i = 0; i < bufferedInput.Length; i++)
+			{
+				chip.InputPins[i].State = bufferedInput[i];
+			}
+			StepChip(chip); // make sure the outputs are also correct again
+
+			isCreatingACache = false;
 		}
 		
 		static int ChooseNextSubChip(SimChip[] subChips, int num)

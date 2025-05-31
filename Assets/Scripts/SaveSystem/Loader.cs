@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using DLS.Simulation;
 
 namespace DLS.SaveSystem
 {
@@ -24,6 +25,10 @@ namespace DLS.SaveSystem
 		{
 			ProjectDescription projectDescription = LoadProjectDescription(projectName);
 			ChipLibrary chipLibrary = LoadChipLibrary(projectDescription);
+
+			Simulator.combinationalChipCaches.Clear();
+			Simulator.chipsKnowToNotBeCombinational.Clear();
+
 			return new Project(projectDescription, chipLibrary);
 		}
 

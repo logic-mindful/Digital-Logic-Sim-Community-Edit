@@ -58,6 +58,7 @@ namespace DLS.Graphics
 
 			if (menuToDraw != MenuType.ChipCustomization) BottomBarUI.DrawUI(project);
 
+			bool aMenuIsOpen = true;
 			if (menuToDraw == MenuType.ChipSave) ChipSaveMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLibrary) ChipLibraryMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ChipCustomization) ChipCustomizationMenu.DrawMenu();
@@ -75,7 +76,10 @@ namespace DLS.Graphics
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
 				if (Simulator.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
+				aMenuIsOpen = false;
 			}
+
+			if (aMenuIsOpen) Simulator.isCreatingACache = false; // Cancel current caching process when a menu gets opened
 
 			ContextMenu.Update();
 		}
