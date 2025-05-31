@@ -19,6 +19,7 @@ namespace DLS.Simulation
 		// Small, purely combinational chips use a LUT for fast calculations. These are stored here. Maps the name of a chip to its LUT.
 		public static readonly Dictionary<string, uint[][]> combinationalChipCaches = new();
 		public static readonly HashSet<string> chipsKnowToNotBeCombinational = new();
+		public static bool useCaching = true;
 
 		// Variables for the creating cache info popup
 		public static bool isCreatingACache = false;
@@ -153,12 +154,12 @@ namespace DLS.Simulation
 				{
 					ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly
 				}
-				else if (combinationalChipCaches.ContainsKey(nextSubChip.Name))
+				else if (combinationalChipCaches.ContainsKey(nextSubChip.Name) && useCaching)
 				{
 					bool wasSuccessful = ProcessCachedChip(nextSubChip); // We found a cached chip, so use LUT to process it directly
 					if (!wasSuccessful) StepChip(nextSubChip); // Fallback to normal simulation, if lookup failed
 				}
-				else if (!chipsKnowToNotBeCombinational.Contains(nextSubChip.Name))
+				else if (!chipsKnowToNotBeCombinational.Contains(nextSubChip.Name) && useCaching)
 				{
 					RecalculateCachedLUTs(nextSubChip); // We found a chip that isn't cached but might be cachable, so we try to cache it
 					StepChip(nextSubChip);
