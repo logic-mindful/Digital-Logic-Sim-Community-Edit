@@ -24,6 +24,7 @@ namespace DLS.Game
 
 		public SimChip SimChip;
 		bool hasSimChip;
+		public bool HasCustomLayout;
 
 		public string ChipName => LastSavedDescription == null ? string.Empty : LastSavedDescription.Name;
 
@@ -67,6 +68,7 @@ namespace DLS.Game
 			description.InputPins ??= Array.Empty<PinDescription>();
 			description.OutputPins ??= Array.Empty<PinDescription>();
 			description.Wires ??= Array.Empty<WireDescription>();
+			instance.HasCustomLayout = description.HasCustomLayout;
 
 			bool anyElementFailedToLoad = false;
 
