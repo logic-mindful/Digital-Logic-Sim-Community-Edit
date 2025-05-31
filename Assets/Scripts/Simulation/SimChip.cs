@@ -36,6 +36,7 @@ namespace DLS.Simulation
 			ID = id;
 			Name = desc.Name;
 			ChipType = desc.ChipType;
+			shouldBeCached = desc.ShouldBeCached;
 			IsBuiltin = ChipType != ChipType.Custom;
 
 			// ---- Create pins (don't allocate unnecessarily as very many sim chips maybe created!) ----
