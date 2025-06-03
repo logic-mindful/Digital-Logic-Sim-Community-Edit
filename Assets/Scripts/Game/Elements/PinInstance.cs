@@ -22,9 +22,11 @@ namespace DLS.Game
 		bool faceRight;
 		public float LocalPosY;
 		public string Name;
+		public int face;
+        public int ID;
+		
 
-
-		public PinInstance(PinDescription desc, PinAddress address, IMoveable parent, bool isSourcePin)
+        public PinInstance(PinDescription desc, PinAddress address, IMoveable parent, bool isSourcePin)
 		{
 			this.parent = parent;
 			bitCount = desc.BitCount;
@@ -33,34 +35,72 @@ namespace DLS.Game
 			IsSourcePin = isSourcePin;
 			Colour = desc.Colour;
 
-			IsBusPin = parent is SubChipInstance subchip && subchip.IsBus;
+            IsBusPin = parent is SubChipInstance subchip && subchip.IsBus;
 			faceRight = isSourcePin;
-			PinState.SetAllDisconnected(ref State);
-		}
+			desc.face = faceRight ? 1 : 3; // 1 for right, 3 for left
+			face = faceRight ? 1 : 3;
+            PinState.SetAllDisconnected(ref State);
+            ID = desc.ID;
+            LocalPosY = desc.LocalOffset;
+        }
 
 		public Vector2 ForwardDir => faceRight ? Vector2.right : Vector2.left;
 
 
-		public Vector2 GetWorldPos()
-		{
-			switch (parent)
-			{
-				case DevPinInstance devPin:
-					return devPin.PinPosition;
-				case SubChipInstance subchip:
-				{
-					Vector2 chipSize = subchip.Size;
-					Vector2 chipPos = subchip.Position;
+        public Vector2 GetWorldPos()
+        {
+            switch (parent)
+            {
+                case DevPinInstance devPin:
+                    return devPin.PinPosition;
+                case SubChipInstance subchip:
+                    {
+                        Vector2 chipSize = subchip.Size;
+                        Vector2 chipPos = subchip.Position;
 
-					float xLocal = (chipSize.x / 2 + DrawSettings.ChipOutlineWidth / 2 - DrawSettings.SubChipPinInset) * (faceRight ? 1 : -1);
-					return chipPos + new Vector2(xLocal, LocalPosY);
-				}
-				default:
-					throw new Exception("Parent type not supported");
-			}
-		}
+                        float halfWidth = chipSize.x / 2f;
+                        float halfHeight = chipSize.y / 2f;
+                        float inset = DrawSettings.SubChipPinInset;
+                        float outlineOffset = DrawSettings.ChipOutlineWidth / 2f;
 
-		public void SetBusFlip(bool flipped)
+                        
+                        float x = 0f;
+                        float y = 0f;
+
+                        switch (face)
+                        {
+                            case 0: // Top edge (Y fixed)
+                                x = LocalPosY;
+                                y = halfHeight + outlineOffset - inset;
+                                break;
+
+                            case 1: // Right edge (X fixed)
+                                x = halfWidth + outlineOffset - inset;
+                                y = LocalPosY;
+                                break;
+
+                            case 2: // Bottom edge (Y fixed)
+                                x = LocalPosY;
+                                y = -halfHeight - outlineOffset + inset;
+                                break;
+
+                            case 3: // Left edge (X fixed)
+                                x = -halfWidth - outlineOffset + inset;
+                                y = LocalPosY;
+                                break;
+
+                            default:
+                                throw new Exception("Invalid pin face: " + face);
+                        }
+
+                        return chipPos + new Vector2(x, y);
+                    }
+                default:
+                    throw new Exception("Parent type not supported");
+            }
+        }
+
+        public void SetBusFlip(bool flipped)
 		{
 			faceRight = IsSourcePin ^ flipped;
 		}

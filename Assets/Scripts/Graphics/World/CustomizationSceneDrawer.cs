@@ -5,6 +5,7 @@ using Seb.Helpers;
 using Seb.Types;
 using Seb.Vis;
 using UnityEngine;
+using System.Linq;
 
 namespace DLS.Graphics
 {
@@ -331,17 +332,39 @@ namespace DLS.Graphics
 					Vector2 mouseDelta = InputHelper.MousePosWorld - chipResizeMouseStartPos;
 					Vector2 desiredSize = chipResizeStartSize + Vector2.Scale(dir, mouseDelta) * 2;
 
-					// Always snap chip height so that pins align with grid lines/centers
-					float deltaY = GridHelper.SnapToGrid(desiredSize.y - chip.MinSize.y);
-					desiredSize.y = chip.MinSize.y + deltaY;
-					// Snap chip width to grid lines if in snap mode
-					if (Project.ActiveProject.ShouldSnapToGrid && dir.x != 0) desiredSize.x = GridHelper.SnapToGridForceEven(desiredSize.x) - DrawSettings.ChipOutlineWidth;
+                    //  snaps if snapping is on or if chip has pins on top or bottom
+                    bool snapX = Project.ActiveProject.ShouldSnapToGrid;
+                    if (!snapX && chip.HasCustomLayout)
+                    {
+                        bool hasXFacePins = chip.InputPins.Concat(chip.OutputPins).Any(p => p.face == 0 || p.face == 2);
+                        snapX = hasXFacePins;
+                    }
 
+                    // snaps if snapping is on or if chip has pins on left or right. if default layout then forces snapping on Y
+                    bool snapY = true;
+                    if (chip.HasCustomLayout)
+                    {
+                        bool hasYFacePins = chip.InputPins.Concat(chip.OutputPins).Any(p => p.face == 1 || p.face == 3);
+                        snapY = hasYFacePins || Project.ActiveProject.ShouldSnapToGrid;
+                    }
+
+                    if (snapY && dir.y != 0)
+                    {
+                        float deltaY = GridHelper.SnapToGrid(desiredSize.y - chip.MinSize.y);
+                        desiredSize.y = chip.MinSize.y + deltaY;
+                    }
+
+                    if (snapX && dir.x != 0)
+                    {
+                        desiredSize.x = GridHelper.SnapToGridForceEven(desiredSize.x) - DrawSettings.ChipOutlineWidth;
+                    }
+
+                    chip.updateMinSize();
 					Vector2 sizeNew = Vector2.Max(desiredSize, chip.MinSize);
 
 					if (sizeNew != chip.Size)
 					{
-						chip.Description.Size = Vector2.Max(desiredSize, chip.MinSize);
+                        chip.Description.Size = Vector2.Max(desiredSize, chip.MinSize);
 						ChipSaveMenu.ActiveCustomizeChip.UpdatePinLayout();
 					}
 				}

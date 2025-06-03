@@ -50,6 +50,14 @@ namespace DLS.Graphics
 			"Active",
 			"Paused"
 		};
+		static readonly string[] PinIndicators =
+        {
+            "Off",
+            "On Hover",
+			"Tab To Toggle",
+			"On Disconnected",
+			"Always"
+        };
 
 		static readonly Vector2 entrySize = new(menuWidth, DrawSettings.SelectorWheelHeight);
 		public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
@@ -63,8 +71,9 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_SimStatus = new("PREFS_SimStatus");
 		static readonly UIHandle ID_SimFrequencyField = new("PREFS_SimTickTarget");
 		static readonly UIHandle ID_ClockSpeedInput = new("PREFS_ClockSpeed");
+		static readonly UIHandle ID_PinIndicators = new("PREFS_PinIndicators");
 
-		static readonly string showGridLabel = "Show grid" + CreateShortcutString("Ctrl+G");
+        static readonly string showGridLabel = "Show grid" + CreateShortcutString("Ctrl+G");
 		static readonly string simStatusLabel = "Sim Status" + CreateShortcutString("Ctrl+Space");
 		static readonly Func<string, bool> integerInputValidator = ValidateIntegerInput;
 
@@ -99,7 +108,8 @@ namespace DLS.Graphics
 				int mainPinNamesMode = DrawNextWheel("Show I/O pin names", PinDisplayOptions, ID_MainPinNames);
 				int chipPinNamesMode = DrawNextWheel("Show chip pin names", PinDisplayOptions, ID_ChipPinNames);
 				int gridDisplayMode = DrawNextWheel(showGridLabel, GridDisplayOptions, ID_GridDisplay);
-				DrawHeader("EDITING:");
+				int pinIndicatorsMode = DrawNextWheel("Show Pin indicators",PinIndicators, ID_PinIndicators);
+                DrawHeader("EDITING:");
 				int snappingMode = DrawNextWheel("Snap to grid", SnappingOptions, ID_Snapping);
 				int straightWireMode = DrawNextWheel("Straight wires", StraightWireOptions, ID_StraightWires);
 
@@ -140,9 +150,10 @@ namespace DLS.Graphics
 				project.description.Prefs_SimTargetStepsPerSecond = targetSimTicksPerSecond;
 				project.description.Prefs_SimStepsPerClockTick = clockSpeed;
 				project.description.Prefs_SimPaused = pauseSim;
+				project.description.Perfs_PinIndicators = pinIndicatorsMode;
 
-				// Cancel / Confirm
-				if (result == MenuHelper.CancelConfirmResult.Cancel)
+                // Cancel / Confirm
+                if (result == MenuHelper.CancelConfirmResult.Cancel)
 				{
 					// Restore original description
 					project.description = originalProjectDesc;
@@ -207,8 +218,9 @@ namespace DLS.Graphics
 			UI.GetWheelSelectorState(ID_Snapping).index = projDesc.Prefs_Snapping;
 			UI.GetWheelSelectorState(ID_StraightWires).index = projDesc.Prefs_StraightWires;
 			UI.GetWheelSelectorState(ID_SimStatus).index = projDesc.Prefs_SimPaused ? 1 : 0;
-			// -- Input fields
-			UI.GetInputFieldState(ID_SimFrequencyField).SetText(projDesc.Prefs_SimTargetStepsPerSecond + "", false);
+			UI.GetWheelSelectorState(ID_PinIndicators).index = projDesc.Perfs_PinIndicators;
+            // -- Input fields
+            UI.GetInputFieldState(ID_SimFrequencyField).SetText(projDesc.Prefs_SimTargetStepsPerSecond + "", false);
 			UI.GetInputFieldState(ID_ClockSpeedInput).SetText(projDesc.Prefs_SimStepsPerClockTick + "", false);
 		}
 

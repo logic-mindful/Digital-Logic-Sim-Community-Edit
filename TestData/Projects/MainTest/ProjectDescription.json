@@ -12,6 +12,7 @@
   "Prefs_SimPaused": false,
   "Prefs_SimTargetStepsPerSecond": 100,
   "Prefs_SimStepsPerClockTick": 6,
+  "Perfs_PinIndicators": 0,
   "AllCustomChipNames":[
     "AND",
     "D-LATCH",
