@@ -442,6 +442,7 @@ PlayerSettings:
     iPhone: 1
     tvOS: 1
   m_BuildTargetGroupLightmapEncodingQuality: []
+  m_BuildTargetGroupHDRCubemapEncodingQuality: []
   m_BuildTargetGroupLightmapSettings: []
   m_BuildTargetGroupLoadStoreDebugModeSettings: []
   m_BuildTargetNormalMapEncoding: []
@@ -718,12 +719,13 @@ PlayerSettings:
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
-    Standalone: 0
+    Standalone: 1
   il2cppCompilerConfiguration:
     Standalone: 1
   il2cppCodeGeneration:
-    Standalone: 1
-  il2cppStacktraceInformation: {}
+    Standalone: 0
+  il2cppStacktraceInformation:
+    Standalone: 0
   managedStrippingLevel:
     EmbeddedLinux: 1
     GameCoreScarlett: 1
@@ -748,11 +750,11 @@ PlayerSettings:
   gcIncremental: 0
   gcWBarrierValidation: 0
   apiCompatibilityLevelPerPlatform: {}
-  editorAssembliesCompatibilityLevel: 1
+  editorAssembliesCompatibilityLevel: 2
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: 2D_BuiltInRenderer
-  metroPackageVersion: 
+  metroPackageName: 2DBuiltInRenderer
+  metroPackageVersion: 1.0.0.0
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
@@ -760,7 +762,7 @@ PlayerSettings:
   metroCertificateNotAfter: 0000000000000000
   metroApplicationDescription: 2D_BuiltInRenderer
   wsaImages: {}
-  metroTileShortName: 
+  metroTileShortName: Digital-Logic-Sim
   metroTileShowName: 0
   metroMediumTileShowName: 0
   metroLargeTileShowName: 0

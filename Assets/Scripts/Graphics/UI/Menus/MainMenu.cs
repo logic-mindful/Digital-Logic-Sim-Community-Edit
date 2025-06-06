@@ -7,13 +7,18 @@ using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
+using SFB;
+using UnityEditor;
 using UnityEngine;
+using Unity.SharpZipLib.Zip;
+using System.IO;
+using Newtonsoft.Json.Linq;
 
 namespace DLS.Graphics
 {
 	public static class MainMenu
 	{
-		public const int MaxProjectNameLength = 20;
+        public const int MaxProjectNameLength = 20;
 		const bool capitalize = true;
 
 		static MenuScreen activeMenuScreen = MenuScreen.Main;
@@ -48,7 +53,9 @@ namespace DLS.Graphics
 			FormatButtonString("Delete"),
 			FormatButtonString("Duplicate"),
 			FormatButtonString("Rename"),
-			FormatButtonString("Open")
+			FormatButtonString("Open"),
+			FormatButtonString("Import"),
+			FormatButtonString("Export")
 		};
 
 		static readonly Vector2Int[] Resolutions =
@@ -65,6 +72,7 @@ namespace DLS.Graphics
 		static readonly bool[] settingsButtonGroupStates = new bool[settingsButtonGroupNames.Length];
 
 		static readonly bool[] openProjectButtonStates = new bool[openProjectButtonNames.Length];
+
 
 		static ProjectDescription[] allProjectDescriptions;
 		static string[] allProjectNames;
@@ -181,6 +189,8 @@ namespace DLS.Graphics
 			const int duplicateButtonIndex = 2;
 			const int renameButtonIndex = 3;
 			const int openButtonIndex = 4;
+			const int importButtonIndex = 5;
+			const int exportButtonIndex = 6;
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
 
 			Vector2 pos = UI.Centre + new Vector2(0, -1);
@@ -195,7 +205,8 @@ namespace DLS.Graphics
 			for (int i = 0; i < openProjectButtonStates.Length; i++)
 			{
 				bool buttonEnabled = activePopup == PopupKind.None && (compatibleProject || i == backButtonIndex || (i == deleteButtonIndex && projectSelected));
-				openProjectButtonStates[i] = buttonEnabled;
+				if (i != importButtonIndex) openProjectButtonStates[i] = buttonEnabled;
+				else openProjectButtonStates[i] = true;
 			}
 
 			Vector2 buttonRegionPos = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
@@ -213,10 +224,42 @@ namespace DLS.Graphics
 			else if (buttonIndex == duplicateButtonIndex) activePopup = PopupKind.NamePopup_DuplicateProject;
 			else if (buttonIndex == renameButtonIndex) activePopup = PopupKind.NamePopup_RenameProject;
 			else if (buttonIndex == openButtonIndex) Main.CreateOrLoadProject(SelectedProjectName, string.Empty);
+			else if (buttonIndex == importButtonIndex) Import();
+			else if (buttonIndex == exportButtonIndex) Export(SelectedProjectName);
 		}
 
 		static bool ProjectNameValidator(string inputString) => inputString.Length <= 20 && !SaveUtils.NameContainsForbiddenChar(inputString);
-
+		static void Export(string projName) {
+			string path = StandaloneFileBrowser.SaveFilePanel("Export project", "", projName, "dlsproj");
+			if (path == "") return;
+			ZipEntryFactory zipFactory = new ZipEntryFactory { IsUnicodeText = true };
+			FastZip fastZip = new FastZip{ EntryFactory = zipFactory };
+			fastZip.CreateZip(path, SavePaths.GetProjectPath(projName), true, null);
+		}
+		static void Import() {
+			string[] filePanel = StandaloneFileBrowser.OpenFilePanel("Import project", "", "dlsproj", false);
+			string path;
+			string projectName = null;
+			if (filePanel.Length == 0) return;
+			else path = filePanel[0];
+			ZipEntryFactory zipFactory = new ZipEntryFactory { IsUnicodeText = true };
+			FastZip fastZip = new FastZip{ EntryFactory = zipFactory };
+			using (ZipFile zipFile = new ZipFile(path))
+			{
+    			foreach(ZipEntry zip in zipFile)
+    			{
+        			if (zip.Name == "ProjectDescription.json" && !zip.IsDirectory)
+        			using (StreamReader reader = new StreamReader(zipFile.GetInputStream(zip)))
+        			{
+            			projectName = (string) JObject.Parse(reader.ReadToEnd())["ProjectName"];
+            			reader.Close();
+        			}
+   				}
+			}
+			if (projectName == null) throw new FileNotFoundException("Project description not found, is the zip corrupted?");
+			fastZip.ExtractZip(path, SavePaths.GetProjectPath(projectName), null);
+			RefreshLoadedProjects();
+		}
 		static void DrawAllProjectsInScrollView(Vector2 topLeft, float width, bool isLayoutPass)
 		{
 			float spacing = 0;
