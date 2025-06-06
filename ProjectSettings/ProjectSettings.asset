@@ -725,7 +725,7 @@ PlayerSettings:
   il2cppCodeGeneration:
     Standalone: 0
   il2cppStacktraceInformation:
-    Standalone: 0
+    Standalone: 1
   managedStrippingLevel:
     EmbeddedLinux: 1
     GameCoreScarlett: 1
