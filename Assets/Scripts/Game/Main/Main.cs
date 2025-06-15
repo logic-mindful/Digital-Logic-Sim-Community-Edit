@@ -5,12 +5,18 @@ using System.Linq;
 using DLS.Description;
 using DLS.Graphics;
 using DLS.SaveSystem;
+using SFB;
 using UnityEngine;
 
 namespace DLS.Game
 {
 	public static class Main
 	{
+		public static readonly ExtensionFilter[] extensions = new [] {
+    		new ExtensionFilter("DLS Project Files", "dlsproj"),
+			new ExtensionFilter("Zip Files", "zip"),
+    		new ExtensionFilter("All Files", "*"),
+		};
 		public static readonly Version DLSVersion = new(2, 1, 6);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
 		public const string LastUpdatedString = "5 May 2025";

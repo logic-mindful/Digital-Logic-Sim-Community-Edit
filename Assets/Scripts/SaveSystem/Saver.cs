@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using DLS.Description;
 using DLS.Game;
+using SFB;
+using Unity.SharpZipLib.Zip;
 
 namespace DLS.SaveSystem
 {
@@ -12,7 +14,13 @@ namespace DLS.SaveSystem
 			string data = Serializer.SerializeAppSettings(settings);
 			WriteToFile(data, SavePaths.AppSettingsPath);
 		}
-
+		public static void SaveZip(string projName) {
+			string path = StandaloneFileBrowser.SaveFilePanel("Export project", "", projName, Main.extensions);
+			if (path == "") return;
+			ZipEntryFactory zipFactory = new ZipEntryFactory { IsUnicodeText = true };
+			FastZip fastZip = new FastZip{ EntryFactory = zipFactory };
+			fastZip.CreateZip(path, SavePaths.GetProjectPath(projName), true, null);
+		}
 		public static void SaveProjectDescription(ProjectDescription projectDescription)
 		{
 			projectDescription.LastSaveTime = DateTime.Now;

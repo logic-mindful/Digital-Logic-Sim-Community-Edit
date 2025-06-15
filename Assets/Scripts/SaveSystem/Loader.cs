@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using SFB;
+using Unity.SharpZipLib.Zip;
 
 namespace DLS.SaveSystem
 {
@@ -25,6 +27,30 @@ namespace DLS.SaveSystem
 			ProjectDescription projectDescription = LoadProjectDescription(projectName);
 			ChipLibrary chipLibrary = LoadChipLibrary(projectDescription);
 			return new Project(projectDescription, chipLibrary);
+		}
+
+		public static void ImportZip() {
+			string[] filePanel = StandaloneFileBrowser.OpenFilePanel("Import project", "", Main.extensions, false);
+			string path;
+			string projectName = null;
+			if (filePanel.Length == 0) return;
+			else path = filePanel[0];
+			ZipEntryFactory zipFactory = new ZipEntryFactory { IsUnicodeText = true };
+			FastZip fastZip = new FastZip{ EntryFactory = zipFactory };
+			using (ZipFile zipFile = new ZipFile(path))
+			{
+    			foreach(ZipEntry zip in zipFile)
+    			{
+        			if (zip.Name == "ProjectDescription.json" && !zip.IsDirectory)
+        			using (StreamReader reader = new StreamReader(zipFile.GetInputStream(zip)))
+        			{
+            			projectName = (string) Newtonsoft.Json.Linq.JObject.Parse(reader.ReadToEnd())["ProjectName"];
+            			reader.Close();
+        			}
+   				}
+			}
+			if (projectName == null) throw new FileNotFoundException("Project description not found, is the zip corrupted?");
+			fastZip.ExtractZip(path, SavePaths.GetProjectPath(projectName), null);
 		}
 
 		public static bool ProjectExists(string projectName)

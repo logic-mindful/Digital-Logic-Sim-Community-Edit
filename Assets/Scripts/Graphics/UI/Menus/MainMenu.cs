@@ -86,11 +86,6 @@ namespace DLS.Graphics
 
 		static string FormatButtonString(string s) => capitalize ? s.ToUpper() : s;
 
-		static readonly ExtensionFilter[] extensions = new [] {
-    		new ExtensionFilter("DLS Project Files", "dlsproj"),
-			new ExtensionFilter("Zip Files", "zip"),
-    		new ExtensionFilter("All Files", "*"),
-		};
 
 		public static void Draw()
 		{
@@ -231,39 +226,13 @@ namespace DLS.Graphics
 			else if (buttonIndex == renameButtonIndex) activePopup = PopupKind.NamePopup_RenameProject;
 			else if (buttonIndex == openButtonIndex) Main.CreateOrLoadProject(SelectedProjectName, string.Empty);
 			else if (buttonIndex == importButtonIndex) Import();
-			else if (buttonIndex == exportButtonIndex) Export(SelectedProjectName);
+			else if (buttonIndex == exportButtonIndex) Saver.SaveZip(SelectedProjectName);
 		}
 
 		static bool ProjectNameValidator(string inputString) => inputString.Length <= 20 && !SaveUtils.NameContainsForbiddenChar(inputString);
-		static void Export(string projName) {
-			string path = StandaloneFileBrowser.SaveFilePanel("Export project", "", projName, extensions);
-			if (path == "") return;
-			ZipEntryFactory zipFactory = new ZipEntryFactory { IsUnicodeText = true };
-			FastZip fastZip = new FastZip{ EntryFactory = zipFactory };
-			fastZip.CreateZip(path, SavePaths.GetProjectPath(projName), true, null);
-		}
-		static void Import() {
-			string[] filePanel = StandaloneFileBrowser.OpenFilePanel("Import project", "", extensions, false);
-			string path;
-			string projectName = null;
-			if (filePanel.Length == 0) return;
-			else path = filePanel[0];
-			ZipEntryFactory zipFactory = new ZipEntryFactory { IsUnicodeText = true };
-			FastZip fastZip = new FastZip{ EntryFactory = zipFactory };
-			using (ZipFile zipFile = new ZipFile(path))
-			{
-    			foreach(ZipEntry zip in zipFile)
-    			{
-        			if (zip.Name == "ProjectDescription.json" && !zip.IsDirectory)
-        			using (StreamReader reader = new StreamReader(zipFile.GetInputStream(zip)))
-        			{
-            			projectName = (string) JObject.Parse(reader.ReadToEnd())["ProjectName"];
-            			reader.Close();
-        			}
-   				}
-			}
-			if (projectName == null) throw new FileNotFoundException("Project description not found, is the zip corrupted?");
-			fastZip.ExtractZip(path, SavePaths.GetProjectPath(projectName), null);
+		static void Import()
+		{
+			Loader.ImportZip();
 			RefreshLoadedProjects();
 		}
 		static void DrawAllProjectsInScrollView(Vector2 topLeft, float width, bool isLayoutPass)
