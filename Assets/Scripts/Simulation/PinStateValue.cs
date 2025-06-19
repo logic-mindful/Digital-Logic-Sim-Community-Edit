@@ -116,7 +116,7 @@ namespace DLS.Simulation
 
         public void SetShortValue(ushort value)
         {
-            a = value| (a & 0xFFFF0000);
+            a = value | (a & 0xFFFF0000);
         }
 
         public void SetShortTristateAndValue(ushort tristate, ushort value)
