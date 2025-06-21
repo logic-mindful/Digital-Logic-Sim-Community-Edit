@@ -23,12 +23,10 @@ namespace DLS.Game
 			SaveAs
 		}
 		public static readonly List<KeyValuePair<PinBitCount,PinBitCount>> SplitMergePairs = new() {
-			new(32,16), new(32,8), new(32,4), new(32,1),
-			new(16,8), new(16,4), new(16,1),
 			new(8,4), new(8,1),
 			new(4,1)
 		};
-		public static readonly List<PinBitCount> PinBitCounts = new List<PinBitCount> { 1, 4, 8, 16, 32 };
+		public static readonly List<PinBitCount> PinBitCounts = new List<PinBitCount> { 1, 4, 8};
 		public static Project ActiveProject;
 		public readonly ChipLibrary chipLibrary;
 

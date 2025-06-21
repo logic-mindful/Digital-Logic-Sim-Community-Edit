@@ -41,12 +41,12 @@ namespace DLS.Game
 				
 				,
 				CreateByNames("MERGE/SPLIT",
-					"1-4",
-					"1-8",
-					"4-8",
-					"4-1",
-					"8-4",
-					"8-1"
+					"1-4BIT",
+					"1-8BIT",
+					"4-8BIT",
+					"4-1BIT",
+					"8-4BIT",
+					"8-1BIT"
 				),
 				CreateByNames("BUS",
 					"BUS-1",

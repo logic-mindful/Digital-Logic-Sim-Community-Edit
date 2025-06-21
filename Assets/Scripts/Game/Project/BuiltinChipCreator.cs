@@ -251,8 +251,9 @@ namespace DLS.Game
 			};
 			PinDescription[] outputPins =
 			{
-				CreatePinDescription("OUT", 1, PinBitCount.Bit16),
-			};
+                CreatePinDescription("OUT B", 1, PinBitCount.Bit8),
+                CreatePinDescription("OUT A", 2, PinBitCount.Bit8)
+            };
 
 			Color col = GetColor(new(0.25f, 0.35f, 0.5f));
 			Vector2 size = new(GridSize * 12, SubChipInstance.MinChipHeightForPins(inputPins, outputPins));
@@ -265,13 +266,16 @@ namespace DLS.Game
             PinDescription[] inputPins =
             {
                 CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8),
-				CreatePinDescription("DATA", 1, PinBitCount.Bit16),
-                CreatePinDescription("WRITE", 2, PinBitCount.Bit1),
-				CreatePinDescription("CLOCK", 3, PinBitCount.Bit1)
+				CreatePinDescription("DATA B", 1, PinBitCount.Bit8),
+				CreatePinDescription("DATA A", 2, PinBitCount.Bit8),
+                CreatePinDescription("WRITE", 3, PinBitCount.Bit1),
+				CreatePinDescription("CLOCK", 4, PinBitCount.Bit1)
             };
             PinDescription[] outputPins =
             {
-                CreatePinDescription("OUT", 5, PinBitCount.Bit16)
+                CreatePinDescription("OUT B", 5, PinBitCount.Bit8),
+				CreatePinDescription("OUT A", 6, PinBitCount.Bit8)
+
             };
 
             Color col = GetColor(new(0.25f, 0.35f, 0.5f));
