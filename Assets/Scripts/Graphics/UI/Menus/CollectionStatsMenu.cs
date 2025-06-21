@@ -29,7 +29,6 @@ namespace DLS.Graphics
 			Draw.ID panelID = UI.ReservePanel();
 
 			const int inputTextPad = 1;
-			const float headerSpacing = 1.5f;
 			Color labelCol = Color.white;
 			Color headerCol = new(0.46f, 1, 0.54f);
 			Vector2 topLeft = UI.Centre + new Vector2(-menuWidth / 2, verticalOffset);
@@ -57,22 +56,6 @@ namespace DLS.Graphics
 
 			return;
 
-			void DrawHeader(string text)
-			{
-				AddHeaderSpacing();
-				UI.DrawText(text, theme.FontBold, theme.FontSizeRegular, labelPosCurr, Anchor.TextCentreLeft, headerCol);
-				AddHeaderSpacing();
-			}
-
-			void AddSpacing()
-			{
-				labelPosCurr.y -= entrySize.y + entrySpacing;
-			}
-
-			void AddHeaderSpacing()
-			{
-				labelPosCurr.y -= headerSpacing;
-			}
 		}
 
 		private static int GetCollectionChipsLength() => 

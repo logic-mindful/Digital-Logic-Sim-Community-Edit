@@ -49,8 +49,12 @@ namespace DLS.Game
 		{
 			get	
 			{
-				float gridDst = BitCount == 1 || BitCount == 4 ? 6 : ((StateGridDimensions.x* MultiBitPinStateDisplaySquareSize) / GridSize + 2.5f);
-				return HandlePosition + faceDir * (GridSize * gridDst);
+				if(BitCount.BitCount is 1 or 4 or 8)
+				{
+                    return HandlePosition + faceDir * (GridSize * (BitCount.BitCount is 1 or 4 ? 6 : 9));
+                }
+
+				return StateDisplayPosition + faceDir * (StateGridSize.x / 2 + 2 * GridSize);
 			}
 		}
 

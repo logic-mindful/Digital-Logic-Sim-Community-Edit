@@ -121,7 +121,7 @@
       "Name":"BASICS"
     },
     {
-      "Chips":["IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8","IN-16","OUT-16","IN-32","OUT-32","IN-128","OUT-128"],
+      "Chips":["IN-1","IN-4","IN-8","OUT-1","OUT-4","OUT-8","IN-16","OUT-16","IN-32","OUT-32","IN-128","OUT-128","IN-2","OUT-2","IN-6","OUT-6","IN-5","OUT-5","IN-7","OUT-7","IN-9","OUT-9","IN-31","OUT-31","IN-37","OUT-37","IN-12","OUT-12","IN-13","OUT-13","IN-21","OUT-21","IN-23","OUT-23","IN-17","OUT-17","IN-56","OUT-56"],
       "IsToggledOpen":true,
       "Name":"IN/OUT"
     },
@@ -136,7 +136,7 @@
       "Name":"DISPLAY"
     },
     {
-      "Chips":["BUS-1","BUS-4","BUS-8","BUS-16","BUS-32","BUS-128"],
+      "Chips":["BUS-1","BUS-4","BUS-8","BUS-16","BUS-32","BUS-128","BUS-2","BUS-6","BUS-5","BUS-7","BUS-9","BUS-31","BUS-37","BUS-12","BUS-13","BUS-21","BUS-23","BUS-17","BUS-56"],
       "IsToggledOpen":true,
       "Name":"BUS"
     },
@@ -167,7 +167,20 @@
     "8",
     "16",
     "32",
-    "128"
+    "128",
+    "2",
+    "6",
+    "5",
+    "7",
+    "9",
+    "31",
+    "37",
+    "12",
+    "13",
+    "21",
+    "23",
+    "17",
+    "56"
   ],
   "SplitMergePairs":[
     {
