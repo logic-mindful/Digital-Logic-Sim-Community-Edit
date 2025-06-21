@@ -199,7 +199,16 @@ namespace DLS.Graphics
 			FontType font = FontBold;
 
 			Vector2 size = Draw.CalculateTextBoundsSize(text, FontSizePinLabel, font) + LabelBackgroundPadding;
-			Vector2 centre = pin.GetWorldPos() + pin.FacingDir * (size.x / 2 + offsetX);
+			Vector2 centre = new Vector2(0, 0);
+			if (pin.face == 0 || pin.face == 2)
+				{
+                 centre = pin.GetWorldPos() + pin.FacingDir * offsetX *2 ;
+            }
+			else
+			{
+                 centre = pin.GetWorldPos() + pin.FacingDir * (size.x / 2 + offsetX);
+            }
+			
 
 			Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
