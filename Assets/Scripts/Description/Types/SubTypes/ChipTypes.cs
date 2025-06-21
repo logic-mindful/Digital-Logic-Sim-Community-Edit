@@ -19,8 +19,10 @@ namespace DLS.Description
 		// ---- Displays ----
 		SevenSegmentDisplay,
 		DisplayRGB,
+		DisplayRGB24b,
 		DisplayDot,
 		DisplayLED,
+		DisplayRGBLED,
 
 		// ---- Merge / Split ----
 		Merge_Pin,

@@ -444,6 +444,10 @@ namespace DLS.Graphics
 			{
 				bounds = DrawDisplay_RGB(posWorld, scaleWorld, sim);
 			}
+			else if (display.DisplayType == ChipType.DisplayRGB24b)
+			{
+				bounds = DrawDisplay_RGB24b(posWorld, scaleWorld, sim);
+			}
 			else if (display.DisplayType == ChipType.DisplayDot)
 			{
 				bounds = DrawDisplay_Dot(posWorld, scaleWorld, sim);
@@ -461,6 +465,20 @@ namespace DLS.Graphics
 
 				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
 			}
+			else if (display.DisplayType == ChipType.DisplayRGBLED)
+			{
+				bool simActive = sim != null;
+				Color col = Color.black;
+				if (simActive)
+				{
+					float red = Unpack4BitColChannel(sim.InputPins[0].State.GetShortValues());
+					float green = Unpack4BitColChannel(sim.InputPins[1].State.GetShortValues());
+					float blue = Unpack4BitColChannel(sim.InputPins[2].State.GetShortValues());
+					col = new(red, green, blue);
+				}
+
+				bounds = DrawDisplay_LED(posWorld, scaleWorld, col);
+			}
 
 			else if (ChipTypeHelper.IsClickableDisplayType(display.DisplayType))
 			{
@@ -469,6 +487,11 @@ namespace DLS.Graphics
 
 			display.LastDrawBounds = bounds;
 			return bounds;
+		}
+
+		static float Unpack4BitColChannel(uint raw)
+		{
+			return (raw & 0b1111) / 15f;
 		}
 
 
@@ -510,10 +533,48 @@ namespace DLS.Graphics
 			}
 
 			return Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
+		}
 
-			float Unpack4BitColChannel(uint raw)
+		public static Bounds2D DrawDisplay_RGB24b(Vector2 centre, float scale, SimChip simSource)
+		{
+			const int pixelsPerRow = 16;
+			const float borderFrac = 0.95f;
+			const float pixelSizeT = 0.925f;
+			// Draw background
+			Draw.Quad(centre, Vector2.one * scale, Color.black);
+			float size = scale * borderFrac;
+
+			bool useSim = simSource != null;
+
+			Vector2 bottomLeft = centre - Vector2.one * size / 2;
+			float pixelSize = size / pixelsPerRow;
+			Vector2 pixelDrawSize = Vector2.one * (pixelSize * pixelSizeT);
+			Color col = ColHelper.MakeCol(0.1f);
+
+			for (int y = 0; y < 16; y++)
 			{
-				return (raw & 0b1111) / 15f;
+				for (int x = 0; x < 16; x++)
+				{
+					if (useSim)
+					{
+						int address = y * 16 + x;
+						uint pixelState = simSource.InternalState[address];
+						float red = Unpack8BitColChannel(pixelState);
+						float green = Unpack8BitColChannel(pixelState >> 8);
+						float blue = Unpack8BitColChannel(pixelState >> 16);
+						col = new Color(red, green, blue);
+					}
+
+					Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
+					Draw.Quad(pos, pixelDrawSize, col);
+				}
+			}
+
+			return Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
+
+			float Unpack8BitColChannel(uint raw)
+			{
+				return (raw & 0b11111111) / 255f;
 			}
 		}
 

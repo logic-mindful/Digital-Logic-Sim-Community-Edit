@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.1",
   "CreationTime": "2025-03-15T00:23:30.404+07:00",
-  "LastSaveTime": "2025-06-19T13:28:30.616+07:00",
+  "LastSaveTime": "2025-06-21T09:54:58.930+07:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
@@ -14,9 +14,9 @@
   "Prefs_SimTargetStepsPerSecond": 15,
   "Prefs_SimStepsPerClockTick": 6,
   "Perfs_PinIndicators": 4,
-  "StepsRanSinceCreated": 105856396,
+  "StepsRanSinceCreated": 105878553,
   "TimeSpentSinceCreated": {
-    "StartFrom": "02:42:38.0701642"
+    "StartFrom": "03:07:17.4077521"
   },
   "AllCustomChipNames":[
     "AND",
@@ -77,7 +77,8 @@
     "BUTTON_test",
     "BUTTON_test2",
     "4sw",
-    "ConstTest"
+    "ConstTest",
+    "24b RGB DISP & LED TST"
   ],
   "StarredList":[
     {
@@ -130,7 +131,7 @@
       "Name":"MERGE/SPLIT"
     },
     {
-      "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED"],
+      "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","RGB DISPLAY-24","LED","RGB LED"],
       "IsToggledOpen":true,
       "Name":"DISPLAY"
     },
@@ -155,7 +156,7 @@
       "Name":"TEST"
     },
     {
-      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest"],
+      "Chips":["PULSE","TEST MergeSplit","BUZZER","SPS","#","BuzzTest","SPSTest","#AA","StatsTest","StatsTest1","StatsTest2","EEPROM 256×16","EEPROM_test","BUTTON","BUTTON_test","BUTTON_test2","DIPSWITCH","4sw","RAM-8","DETECTOR","RTC","ConstTest","24b RGB DISP & LED TST"],
       "IsToggledOpen":true,
       "Name":"OTHER"
     }

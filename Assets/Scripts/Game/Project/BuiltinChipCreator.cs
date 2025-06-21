@@ -42,7 +42,9 @@ namespace DLS.Game
 				// ---- Displays ----
 				CreateDisplay7Seg(),
 				CreateDisplayRGB(),
+				CreateDisplayRGB24b(),
 				CreateDisplayDot(),
+				CreateDisplayRGBLED(),
 				CreateDisplayLED(),
 				// ---- Audio ----
 				CreateBuzzer(),
@@ -467,6 +469,47 @@ namespace DLS.Game
 			return CreateBuiltinChipDescription(ChipType.DisplayRGB, size, col, inputPins, outputPins, displays, NameDisplayLocation.Hidden);
 		}
 
+		static ChipDescription CreateDisplayRGB24b()
+		{
+			float height = GridSize * 24;
+			float width = height;
+			float displayWidth = height - GridSize * 2;
+
+			Color col = GetColor(new(0.1f, 0.1f, 0.1f));
+			Vector2 size = new(width, height);
+
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8),
+				CreatePinDescription("RED", 1, PinBitCount.Bit8),
+				CreatePinDescription("GREEN", 2, PinBitCount.Bit8),
+				CreatePinDescription("BLUE", 3, PinBitCount.Bit8),
+				CreatePinDescription("RESET", 4),
+				CreatePinDescription("WRITE", 5),
+				CreatePinDescription("REFRESH", 6),
+				CreatePinDescription("CLOCK", 7)
+			};
+
+			PinDescription[] outputPins =
+			{
+				CreatePinDescription("R OUT", 8, PinBitCount.Bit8),
+				CreatePinDescription("G OUT", 9, PinBitCount.Bit8),
+				CreatePinDescription("B OUT", 10, PinBitCount.Bit8)
+			};
+
+			DisplayDescription[] displays =
+			{
+				new()
+				{
+					Position = Vector2.zero,
+					Scale = displayWidth,
+					SubChipID = -1
+				}
+			};
+
+			return CreateBuiltinChipDescription(ChipType.DisplayRGB24b, size, col, inputPins, outputPins, displays, NameDisplayLocation.Hidden);
+		}
+
 		static ChipDescription CreateDisplayDot()
 		{
 			PinDescription[] inputPins =
@@ -555,6 +598,35 @@ namespace DLS.Game
 			};
 
 			return CreateBuiltinChipDescription(ChipType.DisplayLED, size, col, inputPins, null, displays, NameDisplayLocation.Hidden);
+		}
+		static ChipDescription CreateDisplayRGBLED()
+		{
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("RED", 0, PinBitCount.Bit4),
+				CreatePinDescription("GREEN", 1, PinBitCount.Bit4),
+				CreatePinDescription("BLUE", 2, PinBitCount.Bit4),
+			};
+
+			float height = SubChipInstance.MinChipHeightForPins(inputPins, null);
+			float width = height;
+			float displayWidth = height - GridSize * 0.5f;
+
+			Color col = GetColor(new(0.1f, 0.1f, 0.1f));
+			Vector2 size = new(width, height);
+
+
+			DisplayDescription[] displays =
+			{
+				new()
+				{
+					Position = Vector2.zero,
+					Scale = displayWidth,
+					SubChipID = -1
+				}
+			};
+
+			return CreateBuiltinChipDescription(ChipType.DisplayRGBLED, size, col, inputPins, null, displays, NameDisplayLocation.Hidden);
 		}
 
 
