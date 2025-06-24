@@ -57,6 +57,7 @@ namespace DLS.Game
 			int height = newSettings.fullscreenMode is FullScreenMode.Windowed ? newSettings.ResolutionY : FullScreenResolution.y;
 			Screen.SetResolution(width, height, newSettings.fullscreenMode);
 			QualitySettings.vSyncCount = newSettings.VSyncEnabled ? 1 : 0;
+			Language.currentLanguage = newSettings.Language;
 		}
 
 		public static void LoadMainMenu()

@@ -23,32 +23,36 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_ProjectNameInput = new("MainMenu_ProjectNameInputField");
 		static readonly UIHandle ID_DisplayResolutionWheel = new("MainMenu_DisplayResolutionWheel");
 		static readonly UIHandle ID_FullscreenWheel = new("MainMenu_FullscreenWheel");
+		static readonly UIHandle ID_LanguageWheel = new("MainMenu_LanguageWheel");
 		static readonly UIHandle ID_ProjectsScrollView = new("MainMenu_ProjectsScrollView");
 
-		static readonly string[] SettingsWheelFullScreenOptions = { "OFF", "MAXIMIZED", "BORDERLESS", "EXCLUSIVE" };
+		static string[] SettingsWheelFullScreenOptions => new[] {
+			Language.GetKey("mainMenu.settings.fullscreen.off"),
+			Language.GetKey("mainMenu.settings.fullscreen.maximized"),
+			Language.GetKey("mainMenu.settings.fullscreen.borderless"),
+			Language.GetKey("mainMenu.settings.fullscreen.exclusive"),
+		};
 		static readonly FullScreenMode[] FullScreenModes = { FullScreenMode.Windowed, FullScreenMode.MaximizedWindow, FullScreenMode.FullScreenWindow, FullScreenMode.ExclusiveFullScreen };
-		static readonly string[] SettingsWheelVSyncOptions = { "DISABLED", "ENABLED" };
+		static string[] SettingsWheelVSyncOptions => new[] { Language.GetKey("mainMenu.settings.vSync.disabled"), Language.GetKey("mainMenu.settings.vSync.enabled") };
 
 		static readonly Func<string, bool> projectNameValidator = ProjectNameValidator;
 		static readonly UI.ScrollViewDrawContentFunc loadProjectScrollViewDrawer = DrawAllProjectsInScrollView;
 
 
-		static readonly string[] menuButtonNames =
-		{
-			FormatButtonString("New Project"),
-			FormatButtonString("Open Project"),
-			FormatButtonString("Settings"),
-			FormatButtonString("About"),
-			FormatButtonString("Quit")
+		static string[] menuButtonNames => new[] {
+			FormatButtonString(Language.GetKey("mainMenu.newProject")),
+			FormatButtonString(Language.GetKey("mainMenu.openProject")),
+			FormatButtonString(Language.GetKey("mainMenu.settings")),
+			FormatButtonString(Language.GetKey("mainMenu.about")),
+			FormatButtonString(Language.GetKey("mainMenu.quit"))
 		};
 
-		static readonly string[] openProjectButtonNames =
-		{
-			FormatButtonString("Back"),
-			FormatButtonString("Delete"),
-			FormatButtonString("Duplicate"),
-			FormatButtonString("Rename"),
-			FormatButtonString("Open")
+		static string[] openProjectButtonNames => new[] {
+			FormatButtonString(Language.GetKey("mainMenu.projectSelection.back")),
+			FormatButtonString(Language.GetKey("mainMenu.projectSelection.delete")),
+			FormatButtonString(Language.GetKey("mainMenu.projectSelection.duplicate")),
+			FormatButtonString(Language.GetKey("mainMenu.projectSelection.rename")),
+			FormatButtonString(Language.GetKey("mainMenu.projectSelection.open"))
 		};
 
 		static readonly Vector2Int[] Resolutions =
@@ -61,7 +65,7 @@ namespace DLS.Graphics
 
 		static readonly string[] ResolutionNames = Resolutions.Select(r => ResolutionToString(r)).ToArray();
 		static readonly string[] FullScreenResName = Resolutions.Select(r => ResolutionToString(Main.FullScreenResolution)).ToArray();
-		static readonly string[] settingsButtonGroupNames = { "EXIT", "APPLY" };
+		static string[] settingsButtonGroupNames => new[] { Language.GetKey("mainMenu.settings.exit"), Language.GetKey("mainMenu.settings.apply") };
 		static readonly bool[] settingsButtonGroupStates = new bool[settingsButtonGroupNames.Length];
 
 		static readonly bool[] openProjectButtonStates = new bool[openProjectButtonNames.Length];
@@ -72,8 +76,8 @@ namespace DLS.Graphics
 
 		static int selectedProjectIndex;
 
-		static readonly string authorString = "Created by: Sebastian Lague";
-		static readonly string versionString = $"Version: {Main.DLSVersion} ({Main.LastUpdatedString})";
+		static string authorString => Language.GetKey("mainMenu.createdBy");
+		static string versionString => string.Format(Language.GetKey("mainMenu.version"), Main.DLSVersion, Main.LastUpdatedString);
 		static string SelectedProjectName => allProjectDescriptions[selectedProjectIndex].ProjectName;
 
 		static string FormatButtonString(string s) => capitalize ? s.ToUpper() : s;
@@ -88,7 +92,7 @@ namespace DLS.Graphics
 			}
 
 			UI.DrawFullscreenPanel(ColHelper.MakeCol255(47, 47, 53));
-			const string title = "DIGITAL LOGIC SIM";
+			string title = Language.GetKey("mainMenu.simTitle");
 			const float titleFontSize = 11.5f;
 			const float titleHeight = 24;
 			const float shaddowOffset = -0.33f;
@@ -255,13 +259,13 @@ namespace DLS.Graphics
 
 				// In case project was made with a newer version of the sim, check if this version is able to open it
 				bool canOpen = currentVersion.ToInt() >= earliestCompatible.ToInt();
-				string failureReason = canOpen ? string.Empty : $"This project requires version {earliestCompatible} or later.";
+				string failureReason = canOpen ? string.Empty : string.Format(Language.GetKey("mainMenu.projectSelection.open.incompatibleVersion"), earliestCompatible);
 				return (canOpen, failureReason);
 			}
 			catch
 			{
 				Debug.Log("Incompatible project: " + projectDescription.ProjectName);
-				return (false, "Unrecognized project format");
+				return (false, Language.GetKey("mainMenu.projectSelection.open.unrecognizedProjectFormat"));
 			}
 		}
 
@@ -315,7 +319,7 @@ namespace DLS.Graphics
 
 				// -- Resolution --
 				bool resEnabled = EditedAppSettings.fullscreenMode == FullScreenMode.Windowed;
-				UI.DrawText("Resolution", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				UI.DrawText(Language.GetKey("mainMenu.settings.resolution"), theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				string[] resNames = resEnabled ? ResolutionNames : FullScreenResName;
 				int resIndex = UI.WheelSelector(ID_DisplayResolutionWheel, resNames, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight, enabled: resEnabled);
 				EditedAppSettings.ResolutionX = Resolutions[resIndex].x;
@@ -323,15 +327,21 @@ namespace DLS.Graphics
 
 				// -- Full screen --
 				pos += Vector2.down * 4;
-				UI.DrawText("Fullscreen", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				UI.DrawText(Language.GetKey("mainMenu.settings.fullscreen"), theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int fullScreenSettingIndex = UI.WheelSelector(ID_FullscreenWheel, SettingsWheelFullScreenOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.fullscreenMode = FullScreenModes[fullScreenSettingIndex];
 				pos += Vector2.down * 4;
 
 				// -- Vsync --
-				UI.DrawText("VSync", theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				UI.DrawText(Language.GetKey("mainMenu.settings.vSync"), theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
 				int vsyncSetting = UI.WheelSelector(EditedAppSettings.VSyncEnabled ? 1 : 0, SettingsWheelVSyncOptions, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
 				EditedAppSettings.VSyncEnabled = vsyncSetting == 1;
+				pos += Vector2.down * 4;
+
+				// -- Vsync --
+				UI.DrawText(Language.GetKey("mainMenu.settings.language"), theme.FontRegular, theme.FontSizeRegular, pos, Anchor.CentreLeft, Color.white);
+				int languageSetting = UI.WheelSelector(ID_LanguageWheel, Language.Languages, new Vector2(elementOriginRight, pos.y), wheelSize, theme.OptionsWheel, Anchor.CentreRight);
+				EditedAppSettings.Language = Language.LanguagesCode[languageSetting];
 
 				// Background panel
 				UI.ModifyPanel(backgroundPanelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 3, ColHelper.MakeCol255(37, 37, 43));
@@ -388,8 +398,8 @@ namespace DLS.Graphics
 				(Vector2 size, Vector2 centre) layoutCancel = UILayoutHelper.HorizontalLayout(2, 0, buttonsRegionCentre, buttonsRegionSize);
 				(Vector2 size, Vector2 centre) layoutConfirm = UILayoutHelper.HorizontalLayout(2, 1, buttonsRegionCentre, buttonsRegionSize);
 
-				bool cancelButton = UI.Button("CANCEL", theme.MainMenuButtonTheme, layoutCancel.centre, new Vector2(layoutCancel.size.x, 0), true, false, true);
-				bool confirmButton = UI.Button("CONFIRM", theme.MainMenuButtonTheme, layoutConfirm.centre, new Vector2(layoutConfirm.size.x, 0), canCreateProject, false, true);
+				bool cancelButton = UI.Button(Language.GetKey("generic.cancel"), theme.MainMenuButtonTheme, layoutCancel.centre, new Vector2(layoutCancel.size.x, 0), true, false, true);
+				bool confirmButton = UI.Button(Language.GetKey("generic.confirm"), theme.MainMenuButtonTheme, layoutConfirm.centre, new Vector2(layoutConfirm.size.x, 0), canCreateProject, false, true);
 
 				if (cancelButton || KeyboardShortcuts.CancelShortcutTriggered)
 				{
@@ -436,11 +446,11 @@ namespace DLS.Graphics
 			using (UI.BeginBoundsScope(true))
 			{
 				Draw.ID panelID = UI.ReservePanel();
-				UI.DrawText("Are you sure you want to delete this project?", theme.FontRegular, theme.FontSizeRegular, UI.Centre, Anchor.Centre, Color.yellow);
+				UI.DrawText(Language.GetKey("mainMenu.projectSelection.delete.contents"), theme.FontRegular, theme.FontSizeRegular, UI.Centre, Anchor.Centre, Color.yellow);
 
 				Vector2 buttonRegionTopLeft = UI.PrevBounds.BottomLeft + Vector2.down * DrawSettings.VerticalButtonSpacing;
 				float buttonRegionWidth = UI.PrevBounds.Width;
-				int buttonIndex = UI.HorizontalButtonGroup(new[] { "CANCEL", "DELETE" }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
+				int buttonIndex = UI.HorizontalButtonGroup(new[] { Language.GetKey("generic.cancel"), Language.GetKey("mainMenu.projectSelection.delete").ToUpper() }, theme.MainMenuButtonTheme, buttonRegionTopLeft, buttonRegionWidth, DrawSettings.HorizontalButtonSpacing, 0, Anchor.TopLeft);
 				UI.ModifyPanel(panelID, UI.GetCurrentBoundsScope().Centre, UI.GetCurrentBoundsScope().Size + Vector2.one * 2, ColHelper.MakeCol255(37, 37, 43));
 
 				if (buttonIndex == 0) // Cancel
@@ -461,8 +471,8 @@ namespace DLS.Graphics
 		{
 			ButtonTheme theme = DrawSettings.ActiveUITheme.MainMenuButtonTheme;
 
-			UI.DrawText("Todo: write something helpful here...", theme.font, theme.fontSize, UI.Centre, Anchor.Centre, Color.white);
-			if (UI.Button("Back", theme, UI.CentreBottom + Vector2.up * 22, Vector2.zero, true, true, true))
+			UI.DrawText(Language.GetKey("mainMenu.about.contents"), theme.font, theme.fontSize, UI.Centre, Anchor.Centre, Color.white);
+			if (UI.Button(Language.GetKey("mainMenu.projectSelection.back"), theme, UI.CentreBottom + Vector2.up * 22, Vector2.zero, true, true, true))
 			{
 				BackToMain();
 			}

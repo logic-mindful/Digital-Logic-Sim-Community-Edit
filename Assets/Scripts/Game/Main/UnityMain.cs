@@ -170,6 +170,7 @@ namespace DLS.Game
 		{
 			Simulator.Reset();
 			UIDrawer.Reset();
+			Language.Refresh();
 			InteractionState.Reset();
 			CameraController.Reset();
 			WorldDrawer.Reset();

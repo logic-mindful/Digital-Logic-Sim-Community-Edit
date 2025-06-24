@@ -1,0 +1,18 @@
+{
+    "name": "DLS.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:06b859b54912bd449812ba95518ecd6b"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

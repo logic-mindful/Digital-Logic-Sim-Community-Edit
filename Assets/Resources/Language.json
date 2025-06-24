@@ -1,0 +1,109 @@
+{
+    "keys": {
+        // Main Menu - Main Screen
+        "mainMenu.simTitle": {
+            "en-US": "DIGITAL LOGIC SIM"
+        },
+        "mainMenu.newProject": {
+            "en-US": "New Project"
+        },
+        "mainMenu.openProject": {
+            "en-US": "Open Project"
+        },
+            // Main Menu - Project Selection
+            "mainMenu.projectSelection.back": {
+                "en-US": "Back"
+            },
+            "mainMenu.projectSelection.delete": {
+                "en-US": "Delete"
+            },
+                "mainMenu.projectSelection.delete.contents": {
+                    "en-US": "Are you sure you want to delete this project?"
+                },
+            "mainMenu.projectSelection.duplicate": {
+                "en-US": "Duplicate"
+            },
+            "mainMenu.projectSelection.rename": {
+                "en-US": "Rename"
+            },
+            "mainMenu.projectSelection.open": {
+                "en-US": "Open"
+            },
+                // Main Menu - Project load errors
+                "mainMenu.projectSelection.open.incompatibleVersion": {
+                    "en-US": "This project requires version {0} or later." // {0}: Earliest project version
+                },
+                "mainMenu.projectSelection.open.unrecognizedProjectFormat": {
+                    "en-US": "Unrecognized project format"
+                },
+        "mainMenu.settings": {
+            "en-US": "Settings"
+        },
+            // Main Menu - Settings
+            "mainMenu.settings.resolution" : {
+                "en-US": "Resolution"
+            },
+            "mainMenu.settings.fullscreen" : {
+                "en-US": "Fullscreen"
+            },
+                // Main Menu - Fullscreen Options
+                "mainMenu.settings.fullscreen.off" : {
+                    "en-US": "OFF"
+                },
+                "mainMenu.settings.fullscreen.maximized" : {
+                    "en-US": "MAXIMIZED"
+                },
+                "mainMenu.settings.fullscreen.borderless" : {
+                    "en-US": "BORDERLESS"
+                },
+                "mainMenu.settings.fullscreen.exclusive" : {
+                    "en-US": "EXCLUSIVE"
+                },
+            "mainMenu.settings.vSync" : {
+                "en-US": "VSync"
+            },
+                // Main Menu - VSync On and Off
+                "mainMenu.settings.vSync.disabled" : {
+                    "en-US": "DISABLED"
+                },
+                "mainMenu.settings.vSync.enabled" : {
+                    "en-US": "ENABLED"
+                },
+            "mainMenu.settings.language" : {
+                "en-US": "Language"
+            },
+            "mainMenu.settings.exit": {
+                "en-US": "EXIT"
+            },
+            "mainMenu.settings.apply": {
+                "en-US": "APPLY"
+            },
+        "mainMenu.about": {
+            "en-US": "About"
+        },
+            // Main Menu - About contents
+            "mainMenu.about.contents": {
+                "en-US": "Todo: write something helpful here..."
+            },
+        "mainMenu.quit": {
+            "en-US": "Quit"
+        },
+        "mainMenu.createdBy": {
+            "en-US": "Created by: Sebastian Lague"
+        },
+        "mainMenu.version": {
+            "en-US": "Version: {0} ({1})" // {0}: Version, {1}: Date
+        },
+
+        // Generic - Cancel and Confirm buttons 
+        "generic.cancel": {
+            "en-US": "CANCEL"
+        },
+        "generic.confirm": {
+            "en-US": "CONFIRM"
+        }
+    },
+    "languages": [
+        {"name": "English", "code": "en-US"}
+    ]
+}

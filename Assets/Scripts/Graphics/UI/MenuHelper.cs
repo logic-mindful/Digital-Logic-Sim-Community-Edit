@@ -18,7 +18,7 @@ namespace DLS.Graphics
 			Confirm
 		}
 
-		static readonly string[] CancelConfirmButtonNames = { "CANCEL", "CONFIRM" };
+		static string[] CancelConfirmButtonNames => new[] { Language.GetKey("generic.cancel"), Language.GetKey("generic.confirm") };
 		static readonly bool[] CancelConfirmInteractableState = { true, true };
 
 		static readonly string[] ButtonGroupNames = { "A", "B", "C" };
