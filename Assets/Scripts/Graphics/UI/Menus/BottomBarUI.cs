@@ -23,6 +23,7 @@ namespace DLS.Graphics
 			$"NEW CHIP     {shortcutTextCol}Ctrl+N",
 			$"SAVE CHIP    {shortcutTextCol}Ctrl+S",
 			$"FIND CHIP    {shortcutTextCol}Ctrl+F",
+			//$"NEW NOTE     {shortcutTextCol}Ctrl+M",
 			$"ADD SPECIAL  {shortcutTextCol}Ctrl+B",
 			$"LIBRARY      {shortcutTextCol}Ctrl+L",
 			$"STATS        {shortcutTextCol}Ctrl+T", // Ctrl+'T' from the T in Stats
@@ -38,6 +39,8 @@ namespace DLS.Graphics
 		const int StatsButtonIndex = 5;
 		const int OptionsButtonIndex = 6;
 		const int QuitButtonIndex = 7;
+  
+    const string c = "<color=#666666ff>";
 
 		// ---- State ----
 		static float scrollX;
@@ -114,6 +117,7 @@ namespace DLS.Graphics
 				if (i == NewChipButtonIndex) CreateNewChip();
 				else if (i == SaveChipButtonIndex) OpenSaveMenu();
 				else if (i == FindChipButtonIndex) OpenSearchMenu();
+				//else if (i == NewNoteButtonIndex) CreateNewNote();
 				else if (i == AddSpecialButtonIndex) OpenAddSpecialMenu();
 				else if (i == LibraryButtonIndex) OpenLibraryMenu();
 				else if (i == StatsButtonIndex) OpenStatsMenu();
@@ -412,12 +416,18 @@ namespace DLS.Graphics
 			}
 		}
 
+		static void CreateNewNote()
+		{
+			Project.ActiveProject.CreateBlankNote(Vector2.zero, "Text");
+		}
+
 		static void HandleKeyboardShortcuts()
 		{
 			if (MenuButtonsAndShortcutsEnabled)
 			{
 				if (KeyboardShortcuts.CreateNewChipShortcutTriggered) CreateNewChip();
 				if (KeyboardShortcuts.SaveShortcutTriggered) OpenSaveMenu();
+				if (KeyboardShortcuts.NewNoteShortcutTriggered) CreateNewNote();
 				if (KeyboardShortcuts.LibraryShortcutTriggered) OpenLibraryMenu();
 			}
 

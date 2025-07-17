@@ -186,7 +186,7 @@ namespace DLS.Game
 			// (same thing if saving a new version of it)
 			if (ViewedChip.LastSavedDescription != null && saveMode != SaveMode.SaveAs)
 			{
-				UpdateAndSaveAffectedChips(ViewedChip.LastSavedDescription, saveChipDescription, false);
+                UpdateAndSaveAffectedChips(ViewedChip.LastSavedDescription, saveChipDescription, false);
 			}
 
 			if (saveMode is SaveMode.Rename)
@@ -238,6 +238,7 @@ namespace DLS.Game
 			devChip.SetSimChip(new SimChip());
 			SetNewActiveDevChip(devChip);
 		}
+
 
 		public void LoadDevChipOrCreateNewIfDoesntExist(string chipName)
 		{
@@ -366,7 +367,7 @@ namespace DLS.Game
 			SetStarred(chipToDeleteName, false, false, false); // ensure removed from starred list
 			EnsureChipRemovedFromCollections(chipToDeleteName);
 			UpdateAndSaveProjectDescription();
-
+			
 
 			// If has deleted the chip that's currently being edited, then open a blank chip
 			if (ChipDescription.NameMatch(ViewedChip.ChipName, chipToDeleteName))
@@ -428,6 +429,25 @@ namespace DLS.Game
 					}
 				}
 			}
+		}
+
+		public void CreateBlankNote(Vector2 position, string text)
+		{
+			// Get all possible values of the NoteColour enum
+			Array colours = Enum.GetValues(typeof(NoteColour));
+
+			// Select a random color
+			NoteColour randomColour = (NoteColour)colours.GetValue(UnityEngine.Random.Range(0, colours.Length));
+
+			// Create the note with the random color
+			NoteDescription noteDesc = new NoteDescription(
+				IDGenerator.GenerateNewElementID(editModeChip),
+				randomColour,
+				text,
+				position
+			);
+
+			controller.StartPlacingNote(noteDesc);
 		}
 
 		bool ChipContainsSubChipDirectly(DevChipInstance chip, string targetName)

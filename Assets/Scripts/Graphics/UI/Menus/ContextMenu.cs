@@ -28,6 +28,10 @@ namespace DLS.Graphics
 			new MenuEntry(Format(Enum.GetName(typeof(PinColour), col)), () => SetCol(col), CanSetCol)
 		).ToArray();
 
+		static readonly MenuEntry[] noteColEntries = ((NoteColour[])Enum.GetValues(typeof(NoteColour))).Select(col =>
+			new MenuEntry(Format(Enum.GetName(typeof(NoteColour), col)), () => SetCol(col), CanSetNoteCol)
+		).ToArray();
+
 
 		static readonly MenuEntry deleteEntry = new(Format("DELETE"), Delete, CanDelete);
 		static readonly MenuEntry openChipEntry = new(Format("OPEN"), OpenChip, CanOpenChip);
@@ -109,6 +113,13 @@ namespace DLS.Graphics
 			new(Format("DELETE"), Delete, CanDelete)
 		};
 
+		static readonly MenuEntry[] entries_note = new[]
+		{
+			new(Format("EDIT"), OpenNoteTextPopup, CanEditCurrentChip),
+			new(Format("DELETE"), Delete, CanDelete),
+			dividerMenuEntry
+		}.Concat(noteColEntries).ToArray();
+
 		static readonly MenuEntry[] entries_bottomBarChip =
 		{
 			openChipEntry,
@@ -169,8 +180,9 @@ namespace DLS.Graphics
 				bool openDevPinContextMenu = (hoverElement is PinInstance pin && pin.parent is DevPinInstance) || hoverElement is DevPinInstance;
 				bool openWireContextMenu = hoverElement is WireInstance;
 				bool openSubchipOutputPinContextMenu = hoverElement is PinInstance pin2 && pin2.parent is SubChipInstance && pin2.IsSourcePin && !pin2.IsBusPin;
+				bool openNoteContextMenu = hoverElement is NoteInstance;
 
-				if (openSubChipContextMenu || openDevPinContextMenu || openWireContextMenu || openSubchipOutputPinContextMenu)
+				if (openSubChipContextMenu || openDevPinContextMenu || openWireContextMenu || openSubchipOutputPinContextMenu || openNoteContextMenu)
 				{
 					interactionContextName = string.Empty;
 					interactionContext = hoverElement;
@@ -225,6 +237,12 @@ namespace DLS.Graphics
 						PinInstance pinContext = (PinInstance)interactionContext;
 						headerName = CreatePinHeaderName(pinContext.Name);
 						activeContextMenuEntries = entries_subChipOutput;
+					}
+					else if (openNoteContextMenu)
+					{
+						NoteInstance note = (NoteInstance)interactionContext;
+						headerName = "NOTE";
+						activeContextMenuEntries = entries_note;
 					}
 
 					SetContextMenuOpen(headerName);
@@ -354,6 +372,7 @@ namespace DLS.Graphics
 		static bool CanDelete() => Project.ActiveProject.CanEditViewedChip;
 		static bool CanFlipBus() => Project.ActiveProject.CanEditViewedChip;
 
+		static bool CanSetNoteCol() => Project.ActiveProject.CanEditViewedChip && UIDrawer.ActiveMenu != UIDrawer.MenuType.ChipCustomization;
 		static bool CanSetCol()
 		{
 			if (!Project.ActiveProject.CanEditViewedChip || UIDrawer.ActiveMenu == UIDrawer.MenuType.ChipCustomization) return false;
@@ -389,9 +408,20 @@ namespace DLS.Graphics
 
         }
 
+		static void SetCol(NoteColour col)
+		{
+			NoteInstance note = (NoteInstance)interactionContext;
+			note.Colour = col;
+		}
+
 		static void OpenChipLabelPopup()
 		{
 			UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipLabelPopup);
+		}
+
+		static void OpenNoteTextPopup()
+		{
+			UIDrawer.SetActiveMenu(UIDrawer.MenuType.NoteTextPopup);
 		}
 
 		public static void EditWire()
