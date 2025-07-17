@@ -36,7 +36,7 @@ namespace Seb.Helpers
 		public static int CreateIntegerStringNonAlloc(char[] charArray, int value)
 		{
 			bool isNegative = value < 0;
-			value = Math.Abs(value);
+			value = Math.Abs(value); 
 
 			int digitCount = value == 0 ? 1 : (int)Math.Log10(value) + 1;
 			int charCount = digitCount;

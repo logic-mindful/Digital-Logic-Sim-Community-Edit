@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
@@ -23,6 +26,7 @@ namespace DLS.Description
 			settings.Converters.Add(new Vector2Converter());
 			settings.Converters.Add(new ColorConverter());
 			settings.Converters.Add(new DateTimeConverter());
+			settings.Converters.Add(new PinBitCountConverter());
 			return settings;
 		}
 
@@ -110,8 +114,24 @@ namespace DLS.Description
 
 			public override DateTime ReadJson(JsonReader reader, Type objectType, DateTime existingValue, bool hasExistingValue, JsonSerializer serializer) => (DateTime)reader.Value;
 		}
+		
+		public class PinBitCountConverter : JsonConverter<PinBitCount>
+		{
 
-		class CustomJsonTextWriter : JsonTextWriter
+
+            public override void WriteJson(JsonWriter writer, [AllowNull] PinBitCount value, JsonSerializer serializer)
+            {
+				string formattedBitCount = value.BitCount.ToString();
+				writer.WriteValue(formattedBitCount);
+            }
+
+            public override PinBitCount ReadJson(JsonReader reader, Type objectType, [AllowNull] PinBitCount existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+				return new PinBitCount(ushort.Parse(reader.Value.ToString()));
+            }
+        }
+
+        class CustomJsonTextWriter : JsonTextWriter
 		{
 			int arrayDepth;
 
@@ -147,5 +167,6 @@ namespace DLS.Description
 				base.WriteIndentSpace();
 			}
 		}
+
 	}
 }

@@ -1,4 +1,5 @@
 using System.Linq;
+using DLS.SaveSystem;
 using Seb.Vis;
 using Seb.Vis.UI;
 using UnityEngine;
@@ -13,6 +14,7 @@ namespace DLS.Graphics
 		public const float PinHeight1Bit = 0.185f;
 		public const float PinHeight4Bit = 0.3f;
 		public const float PinHeight8Bit = 0.43f;
+		public const float PinHeightPerBit = 0.05f;
 		public const float PinRadius = PinHeight1Bit / 2;
 
 		public const FontType FontBold = FontType.JetbrainsMonoBold;
@@ -50,13 +52,19 @@ namespace DLS.Graphics
 		public static readonly ThemeDLS ActiveTheme = CreateTheme();
 		public static readonly UIThemeDLS ActiveUITheme = CreateUITheme();
 
-		// ---- Helper functions ----
-		public static Color GetStateColour(bool isHigh, uint index, bool hover = false)
+        // ---- Helper functions ----
+		public static Color GetStateColour(bool isHigh, uint index,bool hover = false)
 		{
 			index = (uint)Mathf.Min(index, ActiveTheme.StateHighCol.Length - 1); // clamp just to be safe...
 			if (!isHigh && hover) return ActiveTheme.StateHoverCol[index];
 			return isHigh ? ActiveTheme.StateHighCol[index] : ActiveTheme.StateLowCol[index];
 		}
+
+		public static Color GetFlatColour(bool isHigh, uint index, bool hover = false) {
+            index = (uint)Mathf.Min(index, ActiveTheme.FlatColors.Length - 1); // clamp just to be safe...
+            if (!isHigh && hover) return ActiveTheme.FlatColorsHover[index];
+            return ActiveTheme.FlatColors[index];
+        }
 
 		static ThemeDLS CreateTheme()
 		{
@@ -86,7 +94,8 @@ namespace DLS.Graphics
 				new(whiteHigh, whiteHigh, whiteHigh)
 			};
 
-			Color[] note =
+
+      Color[] note =
 			{
 				new Color(0.4f, 0.3f, 0.3f),
 				new Color(0.45f, 0.34f, 0.14f),
@@ -96,8 +105,21 @@ namespace DLS.Graphics
 				new Color(0.45f, 0.2f, 0.45f),
 				new Color(0.6f, 0.6f, 0.6f)
 			};
-
-
+      
+			Color[] flatColors =
+			{
+                MakeCol255(155, 34, 38),
+                MakeCol255(202, 103, 2),
+                MakeCol255(238, 155, 0),
+				MakeCol255(233, 216, 166),
+				MakeCol255(0, 205, 226),
+                MakeCol255(238, 130, 238),
+                MakeCol255(212, 4, 116),
+				new(whiteHigh, whiteHigh, whiteHigh)
+			};
+      
+			Color[] stateHover = stateLow.Select(c => Brighten(c, 0.075f)).ToArray();
+      Color[] flatHover = flatColors.Select(c => Brighten(c, 0.075f)).ToArray();
 			Color[] stateHover = stateLow.Select(c => Brighten(c, 0.1f)).ToArray();
 
       return new ThemeDLS
@@ -124,6 +146,14 @@ namespace DLS.Graphics
 				},
 				BackgroundCol = MakeCol255(66, 66, 69),
 				GridCol = MakeCol255(49, 49, 51),
+				FlatColors = flatColors,
+				FlatColorsHover = flatHover,
+				PinSizeIndicatorColors = new Color[] {
+					new(0,0,0,0), // Depth 0 -- UNUSED
+					MakeCol255(153, 102, 51), // Depth 1
+					MakeCol255(255, 0, 0), // Depth 2
+					MakeCol255(255, 153, 0) // Depth 3
+                }
 			};
 		}
 
@@ -252,8 +282,10 @@ namespace DLS.Graphics
 			public Color[] StateHoverCol;
 			public Color[] StateLowCol;
 			public Color[] NoteCol;
-
 			public Color[] DisplayLEDCols; // Disconnected, Off, On
+			public Color[] FlatColors;
+			public Color[] FlatColorsHover;
+			public Color[] PinSizeIndicatorColors;
 		}
 
 		public class UIThemeDLS

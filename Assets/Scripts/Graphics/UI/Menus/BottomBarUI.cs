@@ -23,8 +23,10 @@ namespace DLS.Graphics
 			$"NEW CHIP     {shortcutTextCol}Ctrl+N",
 			$"SAVE CHIP    {shortcutTextCol}Ctrl+S",
 			$"FIND CHIP    {shortcutTextCol}Ctrl+F",
-			$"NEW NOTE     {shortcutTextCol}Ctrl+M",
+			//$"NEW NOTE     {shortcutTextCol}Ctrl+M",
+			$"ADD SPECIAL  {shortcutTextCol}Ctrl+B",
 			$"LIBRARY      {shortcutTextCol}Ctrl+L",
+			$"STATS        {shortcutTextCol}Ctrl+T", // Ctrl+'T' from the T in Stats
 			$"PREFS        {shortcutTextCol}Ctrl+P",
 			$"QUIT         {shortcutTextCol}Ctrl+Q"
 		};
@@ -32,11 +34,12 @@ namespace DLS.Graphics
 		const int NewChipButtonIndex = 0;
 		const int SaveChipButtonIndex = 1;
 		const int FindChipButtonIndex = 2;
-		const int NewNoteButtonIndex = 3;
+		const int AddSpecialButtonIndex = 3;
 		const int LibraryButtonIndex = 4;
-		const int OptionsButtonIndex = 5;
-		const int QuitButtonIndex = 6;
-
+		const int StatsButtonIndex = 5;
+		const int OptionsButtonIndex = 6;
+		const int QuitButtonIndex = 7;
+  
     const string c = "<color=#666666ff>";
 
 		// ---- State ----
@@ -114,8 +117,10 @@ namespace DLS.Graphics
 				if (i == NewChipButtonIndex) CreateNewChip();
 				else if (i == SaveChipButtonIndex) OpenSaveMenu();
 				else if (i == FindChipButtonIndex) OpenSearchMenu();
-				else if (i == NewNoteButtonIndex) CreateNewNote();
+				//else if (i == NewNoteButtonIndex) CreateNewNote();
+				else if (i == AddSpecialButtonIndex) OpenAddSpecialMenu();
 				else if (i == LibraryButtonIndex) OpenLibraryMenu();
+				else if (i == StatsButtonIndex) OpenStatsMenu();
 				else if (i == OptionsButtonIndex) OpenPreferencesMenu();
 				else if (i == QuitButtonIndex) ExitToMainMenu();
 			}
@@ -393,7 +398,9 @@ namespace DLS.Graphics
 		static void OpenSaveMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipSave);
 		static void OpenSearchMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Search);
 		static void OpenLibraryMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipLibrary);
+		static void OpenStatsMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.ProjectStats);
 		static void OpenPreferencesMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.Preferences);
+		static void OpenAddSpecialMenu() => UIDrawer.SetActiveMenu(UIDrawer.MenuType.SpecialChipMaker);
 
 		static void CreateNewChip()
 		{
@@ -424,8 +431,10 @@ namespace DLS.Graphics
 				if (KeyboardShortcuts.LibraryShortcutTriggered) OpenLibraryMenu();
 			}
 
+			if (KeyboardShortcuts.StatsShortcutTriggered) OpenStatsMenu();
 			if (KeyboardShortcuts.PreferencesShortcutTriggered) OpenPreferencesMenu();
 			if (KeyboardShortcuts.QuitToMainMenuShortcutTriggered) ExitToMainMenu();
+			if (KeyboardShortcuts.SpecialChipsShortcutTriggered) OpenAddSpecialMenu();
 		}
 
 		public static void Reset()

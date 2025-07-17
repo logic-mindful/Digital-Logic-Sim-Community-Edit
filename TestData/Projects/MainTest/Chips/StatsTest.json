@@ -1,0 +1,44 @@
+{
+  "DLSVersion": "2.1.6",
+  "Name": "StatsTest",
+  "NameLocation": 0,
+  "ChipType": 0,
+  "Size": {
+    "x": 1.475,
+    "y": 0.375
+  },
+  "Colour": {
+    "r": 0.122551017,
+    "g": 0.9483913,
+    "b": 0.0456536263,
+    "a": 1
+  },
+  "InputPins":[],
+  "OutputPins":[],
+  "SubChips":[
+    {
+      "Name":"#AA",
+      "ID":1839347277,
+      "Label":"",
+      "Position":{
+        "x":-1.125,
+        "y":-0.625
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    },
+    {
+      "Name":"#AA",
+      "ID":1590622850,
+      "Label":"",
+      "Position":{
+        "x":1.32377,
+        "y":-1.9697
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    }
+  ],
+  "Wires":[],
+  "Displays": null
+}

@@ -18,6 +18,7 @@ namespace DLS.SaveSystem
 			projectDescription.LastSaveTime = DateTime.Now;
 			projectDescription.DLSVersion_LastSaved = Main.DLSVersion.ToString();
 			projectDescription.DLSVersion_EarliestCompatible = Main.DLSVersion_EarliestCompatible.ToString();
+			projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
 
 			string data = Serializer.SerializeProjectDescription(projectDescription);
 			WriteToFile(data, SavePaths.GetProjectDescriptionPath(projectDescription.ProjectName));

@@ -23,12 +23,13 @@ namespace DLS.Game
 
 		public readonly uint[] InternalData;
 		public readonly bool IsBus;
-		public readonly Vector2 MinSize;
+		public Vector2 MinSize;
 
 		public readonly string MultiLineName;
 		public readonly PinInstance[] OutputPins;
 		public string activationKeyString; // input char for the 'key chip' type (stored as string to avoid allocating when drawing)
 		public string Label;
+		public bool HasCustomLayout;
 
 		public SubChipInstance(ChipDescription description, SubChipDescription subChipDesc)
 		{
@@ -42,8 +43,14 @@ namespace DLS.Game
 			MultiLineName = CreateMultiLineName(description.Name);
 			MinSize = CalculateMinChipSize(description.InputPins, description.OutputPins, description.Name);
 
+			HasCustomLayout = description.HasCustomLayout;
+
 			InputPins = CreatePinInstances(description.InputPins, true);
 			OutputPins = CreatePinInstances(description.OutputPins, false);
+			if (HasCustomLayout)
+			{
+				LoadCustomLayout(description);
+			}
 			AllPins = InputPins.Concat(OutputPins).ToArray();
 			LoadOutputPinColours(subChipDesc.OutputPinColourInfo);
 
@@ -85,9 +92,12 @@ namespace DLS.Game
 					PinAddress address = new(subChipDesc.ID, desc.ID);
 					pins[i] = new PinInstance(desc, address, this, !isInputPin);
 				}
+				if (!HasCustomLayout)
+				{
+					// If no custom layout, then calculate the default layout
 
-				CalculatePinLayout(pins);
-
+					CalculatePinLayout(pins);
+				}
 				return pins;
 			}
 		}
@@ -136,11 +146,20 @@ namespace DLS.Game
 
 		public void UpdatePinLayout()
 		{
-			CalculatePinLayout(InputPins);
-			CalculatePinLayout(OutputPins);
-		}
+			if (!HasCustomLayout)
+			{
+				CalculatePinLayout(InputPins);
+				CalculatePinLayout(OutputPins);
+			}
+			else
+			{
+                PinInstance[] combinedPins = InputPins.Concat(OutputPins).ToArray();
+                CustomLayout(combinedPins);
 
-		void CalculatePinLayout(PinInstance[] pins)
+            }
+        }
+
+        void CalculatePinLayout(PinInstance[] pins)
 		{
 			// If only one pin, it should be placed in the centre
 			if (pins.Length == 1)
@@ -177,6 +196,66 @@ namespace DLS.Game
 			}
 		}
 
+        void CustomLayout(PinInstance[] pins)
+        {
+            if (pins == null || pins.Length == 0) return;
+
+            foreach (int face in new[] { 0, 1, 2, 3 })
+            {
+                var facePins = pins.Where(p => p.face == face).ToList();
+                if (facePins.Count == 0) continue;
+
+                bool isHorizontal = face == 0 || face == 2;
+                float chipSpan = isHorizontal ? Size.x : Size.y;
+
+                float GetHalfHeight(PinInstance pin) => PinHeightFromBitCount(pin.bitCount) / 2f;
+                float GetRequiredSpacing(PinInstance a, PinInstance b)
+                    => GetHalfHeight(a) + GetHalfHeight(b) + DrawSettings.GridSize;
+                float GetMinBound(PinInstance pin) => -chipSpan / 2f + GetHalfHeight(pin);
+                float GetMaxBound(PinInstance pin) => chipSpan / 2f - GetHalfHeight(pin);
+
+                void Clamp(PinInstance pin)
+                    => pin.LocalPosY = Mathf.Clamp(pin.LocalPosY, GetMinBound(pin), GetMaxBound(pin));
+
+                foreach (var pin in facePins)
+                    Clamp(pin);
+
+                // Sweeps negative to positive (left to right / bottom to top)
+                var sweepLowToHigh = facePins.OrderBy(p => p.LocalPosY).ToList();
+                for (int i = 1; i < sweepLowToHigh.Count; i++)
+                {
+                    var prev = sweepLowToHigh[i - 1];
+                    var curr = sweepLowToHigh[i];
+
+                    float spacing = GetRequiredSpacing(prev, curr);
+                    float delta = curr.LocalPosY - prev.LocalPosY;
+
+                    if (delta < spacing)
+                    {
+                        curr.LocalPosY = prev.LocalPosY + spacing;
+                        Clamp(curr);
+                    }
+                }
+                // now sweep positive to negative (right to left / top to bottom) to ensure both ends are within chip
+                var sweepHighToLow = facePins.OrderByDescending(p => p.LocalPosY).ToList();
+                for (int i = 1; i < sweepHighToLow.Count; i++)
+                {
+                    var prev = sweepHighToLow[i - 1];
+                    var curr = sweepHighToLow[i];
+
+                    float spacing = GetRequiredSpacing(prev, curr);
+                    float delta = prev.LocalPosY - curr.LocalPosY;
+
+                    if (delta < spacing)
+                    {
+                        curr.LocalPosY = prev.LocalPosY - spacing;
+                        Clamp(curr);
+                    }
+                }
+            }
+        }
+        public void SetCustomLayout(bool SetCustom) => this.HasCustomLayout = SetCustom;
+
 		// Min chip height based on input and output pins
 		public static float MinChipHeightForPins(PinDescription[] inputs, PinDescription[] outputs) => Mathf.Max(MinChipHeightForPins(inputs), MinChipHeightForPins(outputs));
 
@@ -186,8 +265,64 @@ namespace DLS.Game
 			return CalculateDefaultPinLayout(pins.Select(p => p.BitCount).ToArray()).chipHeight;
 		}
 
-		// Calculate minimal height of chip to fit the given pins, and calculate their y positions (in grid space)
-		public static (float chipHeight, float[] pinGridY) CalculateDefaultPinLayout(PinBitCount[] pins)
+
+		//updates min size of chip based on which pins are on which faces, needed for custom layouts
+		public void updateMinSize()
+		{
+            PinInstance[] pins = InputPins.Concat(OutputPins).ToArray();
+            if (pins == null || pins.Length == 0) return;
+            float Min0 = 0f;
+            float Min1 = 0f;
+			float Min2 = 0f;
+			float Min3 = 0f;
+            foreach (PinInstance pin in pins)
+            {
+				
+                int pinGridHeight = pin.bitCount.BitCount switch
+                {
+                    PinBitCount.Bit1 => 2,
+                    PinBitCount.Bit4 => 3,
+                    PinBitCount.Bit8 => 4,
+					_ => Mathf.RoundToInt(PinHeightFromBitCount(pin.bitCount) /DrawSettings.GridSize)
+                };
+
+                if (pin.face == 0)
+                {
+                    Min0 += pinGridHeight;
+                }
+                else if (pin.face == 1)
+                {
+                    Min1 += pinGridHeight;
+                }
+                else if (pin.face == 2)
+                {
+                    Min2 += pinGridHeight;
+                }
+				else
+				{
+                    Min3 += pinGridHeight;
+                }
+            }
+			
+            float MinY = Mathf.Max(Min1, Min3);
+            float MinX = Mathf.Max(Min0, Min2);
+			
+			MinX = Mathf.Abs(MinX) * DrawSettings.GridSize;
+            MinY = Mathf.Abs(MinY) * DrawSettings.GridSize;
+            
+            string multiLineName = CreateMultiLineName(Description.Name);
+            bool hasMultiLineName = multiLineName != Description.Name;
+            float minNameHeight = DrawSettings.GridSize * (hasMultiLineName ? 4 : 3);
+
+            Vector2 nameDrawBoundsSize = DevSceneDrawer.CalculateChipNameBounds(multiLineName);
+
+            float sizeX = Mathf.Max(nameDrawBoundsSize.x + DrawSettings.GridSize, MinX);
+            float sizeY = Mathf.Max(minNameHeight, MinY);
+            MinSize = new Vector2(sizeX, sizeY);
+        }
+
+        // Calculate minimal height of chip to fit the given pins, and calculate their y positions (in grid space)
+        public static (float chipHeight, float[] pinGridY) CalculateDefaultPinLayout(PinBitCount[] pins)
 		{
 			int gridY = 0; // top
 			float[] pinGridYVals = new float[pins.Length];
@@ -195,12 +330,14 @@ namespace DLS.Game
 			for (int i = 0; i < pins.Length; i++)
 			{
 				PinBitCount pinBitCount = pins[i];
-				int pinGridHeight = pinBitCount switch
+				int pinGridHeight = pinBitCount.BitCount switch
 				{
 					PinBitCount.Bit1 => 2,
 					PinBitCount.Bit4 => 3,
-					_ => 4
-				};
+					PinBitCount.Bit8 => 4,
+                    _ => Mathf.RoundToInt(PinHeightFromBitCount(pinBitCount) / DrawSettings.GridSize)
+
+                };
 
 				pinGridYVals[i] = gridY - pinGridHeight / 2f;
 				gridY -= pinGridHeight;
@@ -304,13 +441,18 @@ namespace DLS.Game
 
 		public static float PinHeightFromBitCount(PinBitCount bitCount)
 		{
-			return bitCount switch
+			return bitCount.BitCount switch
 			{
 				PinBitCount.Bit1 => DrawSettings.PinRadius * 2,
-				PinBitCount.Bit4 => DrawSettings.PinHeight4Bit,
+				PinBitCount.Bit4 => DrawSettings.PinHeight4Bit, 
 				PinBitCount.Bit8 => DrawSettings.PinHeight8Bit,
-				_ => throw new Exception("Bit count not implemented " + bitCount)
-			};
+                _ => (GetPinDepthMultiplier(bitCount) * bitCount.BitCount * DrawSettings.PinHeightPerBit) + 0.03f,
+            };
+		}
+
+		public static float GetPinDepthMultiplier(PinBitCount bitCount)
+		{
+			return (float)Math.Pow(8, -bitCount.GetTier());
 		}
 
 		// Split chip name into two lines (if contains a space character)
@@ -378,6 +520,12 @@ namespace DLS.Game
 			}
 		}
 
+		public void UpdateInternalData(uint[] data)
+		{
+			if (!ChipTypeHelper.IsInternalDataModifiable(ChipType)) throw new Exception("Internal Data is not modifiable for the type of chip : " + ChipTypeHelper.GetName(ChipType));
+			Array.Copy(data, InternalData, data.Length);
+		}
+
 		void LoadOutputPinColours(OutputPinColourInfo[] cols)
 		{
 			if (cols == null) return;
@@ -393,5 +541,25 @@ namespace DLS.Game
 				}
 			}
 		}
-	}
+		void LoadCustomLayout(ChipDescription chipDesc)
+		{
+            void ApplyLayout(PinInstance pin, PinDescription[] descriptions)
+            {
+                var desc = Array.Find(descriptions, d => d.ID == pin.ID);
+                if (desc.ID != 0) // found a matching description
+                {
+                    pin.face = desc.face;
+
+                    pin.LocalPosY = desc.LocalOffset;
+                
+                }
+            }
+
+            foreach (var pin in InputPins)
+                ApplyLayout(pin, chipDesc.InputPins);
+
+            foreach (var pin in OutputPins)
+                ApplyLayout(pin, chipDesc.OutputPins);
+        }
+    }
 }

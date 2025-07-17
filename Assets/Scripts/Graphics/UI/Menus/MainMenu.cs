@@ -3,6 +3,7 @@ using System.Linq;
 using DLS.Description;
 using DLS.Game;
 using DLS.SaveSystem;
+using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
@@ -79,6 +80,8 @@ namespace DLS.Graphics
 
 		public static void Draw()
 		{
+			Simulator.UpdateInPausedState();
+			
 			if (KeyboardShortcuts.CancelShortcutTriggered && activePopup == PopupKind.None)
 			{
 				BackToMain();
@@ -483,7 +486,12 @@ namespace DLS.Graphics
 
 		static void Quit()
 		{
-			Application.Quit();
+			#if UNITY_EDITOR
+				// There should be a NullReferenceException when quitting, but it does not affect the application.
+				UnityEditor.EditorApplication.isPlaying = false;
+			#else
+				Application.Quit();
+			#endif
 		}
 
 		enum MenuScreen

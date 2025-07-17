@@ -1,0 +1,66 @@
+{
+  "DLSVersion": "2.1.6",
+  "Name": "StatsTest2",
+  "NameLocation": 0,
+  "ChipType": 0,
+  "Size": {
+    "x": 1.625,
+    "y": 0.375
+  },
+  "Colour": {
+    "r": 0.7356529,
+    "g": 0.03489643,
+    "b": 0.3001187,
+    "a": 1
+  },
+  "InputPins":[],
+  "OutputPins":[],
+  "SubChips":[
+    {
+      "Name":"StatsTest1",
+      "ID":56785596,
+      "Label":"",
+      "Position":{
+        "x":-2.5,
+        "y":0.75
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    },
+    {
+      "Name":"StatsTest1",
+      "ID":92195362,
+      "Label":"",
+      "Position":{
+        "x":-0.5,
+        "y":-0.625
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    },
+    {
+      "Name":"StatsTest1",
+      "ID":1416875230,
+      "Label":"",
+      "Position":{
+        "x":1.5,
+        "y":2.3125
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    },
+    {
+      "Name":"StatsTest1",
+      "ID":19961094,
+      "Label":"",
+      "Position":{
+        "x":-2.375,
+        "y":-1.5
+      },
+      "OutputPinColourInfo":[],
+      "InternalData":null
+    }
+  ],
+  "Wires":[],
+  "Displays": null
+}

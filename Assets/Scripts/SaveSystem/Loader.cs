@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using DLS.Description;
@@ -23,6 +24,7 @@ namespace DLS.SaveSystem
 		public static Project LoadProject(string projectName)
 		{
 			ProjectDescription projectDescription = LoadProjectDescription(projectName);
+			if (projectDescription.TimeSpentSinceCreated == null) projectDescription.TimeSpentSinceCreated = new();
 			ChipLibrary chipLibrary = LoadChipLibrary(projectDescription);
 			return new Project(projectDescription, chipLibrary);
 		}
@@ -53,6 +55,7 @@ namespace DLS.SaveSystem
 				collection.UpdateDisplayStrings();
 			}
 
+			UpgradeHelper.ApplyVersionChangesToProject(ref desc); // Apply changes necessary to ProjectDesc file for modded game.
 			return desc;
 		}
 
@@ -81,14 +84,14 @@ namespace DLS.SaveSystem
 		static ChipLibrary LoadChipLibrary(ProjectDescription projectDescription)
 		{
 			string chipDirectoryPath = SavePaths.GetChipsPath(projectDescription.ProjectName);
-			ChipDescription[] loadedChips = new ChipDescription[projectDescription.AllCustomChipNames.Length];
+            ChipDescription[] loadedChips = new ChipDescription[projectDescription.AllCustomChipNames.Length];
 
 			if (!Directory.Exists(chipDirectoryPath) && loadedChips.Length > 0) throw new DirectoryNotFoundException(chipDirectoryPath);
 
-			ChipDescription[] builtinChips = BuiltinChipCreator.CreateAllBuiltinChipDescriptions();
+			ChipDescription[] builtinChips = BuiltinChipCreator.CreateAllBuiltinChipDescriptions(projectDescription);
 			HashSet<string> customChipNameHashset = new(ChipDescription.NameComparer);
 
-			for (int i = 0; i < loadedChips.Length; i++)
+            for (int i = 0; i < projectDescription.AllCustomChipNames.Length; i++)
 			{
 				string chipPath = Path.Combine(chipDirectoryPath, projectDescription.AllCustomChipNames[i] + ".json");
 				string chipSaveString = File.ReadAllText(chipPath);
@@ -98,13 +101,12 @@ namespace DLS.SaveSystem
 				customChipNameHashset.Add(chipDesc.Name);
 			}
 
-
-			// If built-in chip name conflicts with a custom chip, the built-in chip must have been added in a newer version.
-			// In that case, simply exclude the built-in chip. TODO: warn player that they should rename their chip if they want access to new builtin version
-			builtinChips = builtinChips.Where(b => !customChipNameHashset.Contains(b.Name)).ToArray();
+            // If built-in chip name conflicts with a custom chip, the built-in chip must have been added in a newer version.
+            // In that case, simply exclude the built-in chip. TODO: warn player that they should rename their chip if they want access to new builtin version
+            builtinChips = builtinChips.Where(b => !customChipNameHashset.Contains(b.Name)).ToArray();
 
 			UpgradeHelper.ApplyVersionChanges(loadedChips, builtinChips);
-			return new ChipLibrary(loadedChips, builtinChips);
+			return new ChipLibrary(loadedChips, builtinChips); 
 		}
 	}
 }

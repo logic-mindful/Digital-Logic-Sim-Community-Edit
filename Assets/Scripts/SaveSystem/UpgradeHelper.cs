@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using DLS.Description;
 using DLS.Game;
 using UnityEngine;
@@ -6,6 +8,7 @@ namespace DLS.SaveSystem
 {
 	public static class UpgradeHelper
 	{
+
 		public static void ApplyVersionChanges(ChipDescription[] customChips, ChipDescription[] builtinChips)
 		{
 			Main.Version defaultVersion = new(2, 0, 0);
@@ -26,8 +29,43 @@ namespace DLS.SaveSystem
 			}
 		}
 
+		public static void ApplyVersionChangesToProject(ref ProjectDescription projectDescription)
+		{
+			Main.Version defaultModdedVersion = new(1, 0, 0);
+			Main.Version moddedVersion_1_1_0 = new(1, 1, 0); // Custom IN and OUTS version
+			Main.Version moddedVersion_1_1_1 = new(1, 1, 1); // New 16 and 32 bit pins
 
-		static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
+
+			bool canParseModdedVersion = Main.Version.TryParse(projectDescription.DLSVersion_LastSavedModdedVersion, out Main.Version projectVersion);
+
+			bool isVersionEarlierThan_1_1_0 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_0.ToInt();
+			bool isVersionEarlierThan_1_1_1 = (!canParseModdedVersion) || projectVersion.ToInt() < moddedVersion_1_1_1.ToInt();
+
+			bool isSplitMergeInvalid = projectDescription.SplitMergePairs == null || projectDescription.SplitMergePairs.Count == 0;
+			bool isPinBitCountInvalid = projectDescription.pinBitCounts == null || projectDescription.pinBitCounts.Count == 0;
+
+			if (isVersionEarlierThan_1_1_0 | isPinBitCountInvalid)
+			{
+				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+				projectDescription.pinBitCounts = Project.PinBitCounts;
+				projectDescription.SplitMergePairs = Project.SplitMergePairs;
+			}
+
+			if (isVersionEarlierThan_1_1_0 | isSplitMergeInvalid)
+			{
+				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+				projectDescription.SplitMergePairs = Project.SplitMergePairs;
+			}
+			
+			if (isVersionEarlierThan_1_1_1)
+			{
+				projectDescription.DLSVersion_LastSavedModdedVersion = Main.DLSVersion_ModdedID.ToString();
+				projectDescription.pinBitCounts.Union(Project.PinBitCounts);
+				projectDescription.SplitMergePairs.Union(Project.SplitMergePairs);
+			}
+        }
+
+        static void UpdateChipPre_2_1_5(ChipDescription chipDesc)
 		{
 			string ledName = ChipTypeHelper.GetName(ChipType.DisplayLED);
 

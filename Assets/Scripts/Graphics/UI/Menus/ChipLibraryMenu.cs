@@ -250,6 +250,7 @@ namespace DLS.Graphics
 						int buttonIndex_moveStep = DrawHorizontalButtonGroup(buttonNames_moveSingleStep, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						int buttonIndex_moveJump = DrawHorizontalButtonGroup(buttonNames_jump, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						ChipActionButtons(selectedChipName, ref topLeft, panelContentBounds.Width);
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
 
 						bool moveSingleStepDown = buttonIndex_moveStep == 1;
 						bool moveJumpDown = buttonIndex_moveJump == 1;
@@ -262,15 +263,20 @@ namespace DLS.Graphics
 							project.SetStarred(selectedChipName, !isStarred, false);
 						}
 
+						if (stats) {
+							ChipStatsMenu.SetChip(selectedChipName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipStats);
+						}
+
 						if (moveSingleStepDown || moveJumpDown) // Move chip down
 						{
 							bool moveWithinCurrentCollection = (moveSingleStepDown && canStepDownInCollection) || (moveJumpDown && !canJumpDownACollection);
 							if (moveWithinCurrentCollection) // move down in current collection
 							{
-								int startIndex = selectedChipInCollectionIndex;
-								int endIndex = moveJumpDown ? collection.Chips.Count - 1 : selectedChipInCollectionIndex + 1;
-								(collection.Chips[startIndex], collection.Chips[endIndex]) = (collection.Chips[endIndex], collection.Chips[startIndex]);
-								selectedChipInCollectionIndex = endIndex;
+								int targetIndex = moveJumpDown ? collection.Chips.Count - 1 : selectedChipInCollectionIndex + 1;
+								collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+								collection.Chips.Insert(targetIndex, selectedChipName);
+								selectedChipInCollectionIndex = targetIndex;
 							}
 							else // move down to next collection
 							{
@@ -282,10 +288,10 @@ namespace DLS.Graphics
 							bool moveWithinCurrentCollection = (moveSingleStepUp && canStepUpInCollection) || (moveJumpUp && !canJumpUpACollection);
 							if (moveWithinCurrentCollection) // move up in current collection
 							{
-								int startIndex = selectedChipInCollectionIndex;
-								int endIndex = moveJumpUp ? 0 : selectedChipInCollectionIndex - 1;
-								(collection.Chips[startIndex], collection.Chips[endIndex]) = (collection.Chips[endIndex], collection.Chips[startIndex]);
-								selectedChipInCollectionIndex = endIndex;
+								int targetIndex = moveJumpUp ? 0 : selectedChipInCollectionIndex - 1;
+								collection.Chips.RemoveAt(selectedChipInCollectionIndex);
+								collection.Chips.Insert(targetIndex, selectedChipName);
+								selectedChipInCollectionIndex = targetIndex;
 							}
 							else // move up to next collection
 							{
@@ -298,6 +304,7 @@ namespace DLS.Graphics
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
+						string selectedCollectionName = collection.Name;
 						ButtonTheme colSource = GetButtonTheme(true, true);
 						DrawHeader(collection.Name, colSource.buttonCols.normal, colSource.textCols.normal, ref topLeft, panelContentBounds.Width);
 
@@ -313,6 +320,12 @@ namespace DLS.Graphics
 						interactableStates_renameDelete[1] = canRenameOrDelete;
 						int buttonIndexEditCollection = DrawHorizontalButtonGroup(buttonNames_collectionRenameOrDelete, interactableStates_renameDelete, ref topLeft, panelContentBounds.Width);
 
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
+
+						if (stats) {	
+							CollectionStatsMenu.SetCollection(selectedCollectionName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.CollectionStats);
+						}
 						// ---- Handle button inputs ----
 						if (toggleStarred)
 						{
@@ -450,10 +463,11 @@ namespace DLS.Graphics
 					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 					MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
 				}
-			}
 
-			// Delete confirmation
-			if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
+            }
+
+            // Delete confirmation
+            if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
 			{
 				using (UI.BeginBoundsScope(true))
 				{
@@ -736,5 +750,6 @@ namespace DLS.Graphics
 				}
 			}
 		}
-	}
+
+    }
 }

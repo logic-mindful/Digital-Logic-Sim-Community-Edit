@@ -113,15 +113,38 @@ namespace DLS.Graphics
 			}
 		}
 
-		// Create a subchip instance based on the current dev chip (we need a subchip instance to be able to draw a preview of the chip in the customization menu)
-		// The description on this subchip holds potential customizations, such as name changes, resizing, colour etc.
-		static SubChipInstance CreateCustomizationState()
-		{
-			ChipDescription desc = DescriptionCreator.CreateChipDescription(Project.ActiveProject.ViewedChip);
-			return CreatePreviewSubChipInstance(desc);
-		}
+        // Create a subchip instance based on the current dev chip (we need a subchip instance to be able to draw a preview of the chip in the customization menu)
+        // The description on this subchip holds potential customizations, such as name changes, resizing, colour etc.
+		// This will load custom pin layouts if available to support editting existing chips. if no custom layout will use default behaviours.
+        static SubChipInstance CreateCustomizationState()
+        {
+            DevChipInstance viewedChip = Project.ActiveProject.ViewedChip;
+            ChipDescription desc = DescriptionCreator.CreateChipDescription(viewedChip);
 
-		static void OpenCustomizationMenu()
+            desc.HasCustomLayout = viewedChip.HasCustomLayout;
+
+            // Copy layout if it exists
+            if (desc.HasCustomLayout && viewedChip.LastSavedDescription != null)
+            {
+                var savedDesc = viewedChip.LastSavedDescription;
+
+                for (int i = 0; i < desc.InputPins.Length && i < savedDesc.InputPins.Length; i++)
+                {
+                    desc.InputPins[i].face = savedDesc.InputPins[i].face;
+                    desc.InputPins[i].LocalOffset = savedDesc.InputPins[i].LocalOffset;
+                }
+
+                for (int i = 0; i < desc.OutputPins.Length && i < savedDesc.OutputPins.Length; i++)
+                {
+                    desc.OutputPins[i].face = savedDesc.OutputPins[i].face;
+                    desc.OutputPins[i].LocalOffset = savedDesc.OutputPins[i].LocalOffset;
+                }
+            }
+
+            return CreatePreviewSubChipInstance(desc);
+        }
+
+        static void OpenCustomizationMenu()
 		{
 			ActiveCustomizeChip = CreatePreviewSubChipInstance(ActiveCustomizeDescription);
 			CustomizeStateBeforeEnteringCustomizeMenu = CreatePreviewSubChipInstance(Saver.CloneChipDescription(ActiveCustomizeDescription));

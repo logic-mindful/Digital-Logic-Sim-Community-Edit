@@ -9,6 +9,7 @@ using DLS.SaveSystem;
 using DLS.Simulation;
 using Seb.Helpers;
 using UnityEngine;
+using UnityEngine.Windows;
 using Debug = UnityEngine.Debug;
 
 namespace DLS.Game
@@ -21,7 +22,11 @@ namespace DLS.Game
 			Rename,
 			SaveAs
 		}
-
+		public static readonly List<KeyValuePair<PinBitCount,PinBitCount>> SplitMergePairs = new() {
+			new(8,4), new(8,1),
+			new(4,1)
+		};
+		public static readonly List<PinBitCount> PinBitCounts = new List<PinBitCount> { 1, 4, 8};
 		public static Project ActiveProject;
 		public readonly ChipLibrary chipLibrary;
 
@@ -31,21 +36,27 @@ namespace DLS.Game
 		// ---- Display state ----
 		public bool ShowGrid => description.Prefs_GridDisplayMode == 1;
 		public bool PinNameDisplayIsTabToggledOn;
-		
+
 		// ---- Chip view / edit state ----
 		// At the bottom of the stack is the chip that currently is being edited. 
 		// If chips are entered in view mode, they will be placed above on the stack.
 		public readonly Stack<DevChipInstance> chipViewStack = new();
+
 		SimChip ViewedSimChip => ViewedChip.SimChip;
+
 		// The chip currently in view. This chip may be in view-only mode.
 		public DevChipInstance ViewedChip => chipViewStack.Peek();
 		public bool CanEditViewedChip => chipViewStack.Count == 1;
 		public string ActiveDevChipName => ViewedChip.ChipName;
+
 		public bool ChipHasBeenSavedBefore => ViewedChip.LastSavedDescription != null;
+
 		// String representation of the viewed chips stack for display purposes
 		public string viewedChipsString = string.Empty;
+
 		// The chip currently being edited. (This is not necessarily the currently viewed chip)
 		DevChipInstance editModeChip;
+		public AudioState audioState;
 
 		// ---- Simulation settings and state ----
 		static readonly bool debug_logSimTime = false;
@@ -291,6 +302,14 @@ namespace DLS.Game
 			simChip.UpdateInternalState(romChip.InternalData);
 		}
 
+		public void NotifyRomContentsEditedRuntime(SimChip simChip)
+		{
+			bool foundChip = ViewedChip.TryGetSubChipByID(simChip.ID, out SubChipInstance instance);
+			if (foundChip) {
+				instance.UpdateInternalData(simChip.InternalState);
+			}
+		}
+
 		public void NotifyLEDColourChanged(SubChipInstance ledChip, uint colIndex)
 		{
 			SimChip simChip = rootSimChip.GetSubChipFromID(ledChip.ID);
@@ -298,7 +317,33 @@ namespace DLS.Game
 			ledChip.InternalData[0] = colIndex;
 		}
 
-		public void DeleteChip(string chipToDeleteName)
+		public void NotifyButtonColourChanged(SubChipInstance buttonChip, uint colIndex)
+		{
+            SimChip simChip = rootSimChip.GetSubChipFromID(buttonChip.ID);
+            simChip.InternalState[0] = colIndex;
+            buttonChip.InternalData[0] = colIndex;
+        }
+
+		public void NotifyToggleStateChanged(SimChip simChip)
+		{
+            bool foundChip = ViewedChip.TryGetSubChipByID(simChip.ID, out SubChipInstance instance);
+            if (foundChip)
+            {
+                instance.UpdateInternalData(simChip.InternalState);
+            }
+        }
+		
+		public void NotifyConstantEdited(SubChipInstance constantChip, ushort value)
+		{
+            SimChip simChip = rootSimChip.
+				GetSubChipFromID
+				(constantChip.ID);
+			constantChip.InternalData[0] = value;
+            simChip.UpdateInternalState(constantChip.InternalData);
+
+        }
+
+        public void DeleteChip(string chipToDeleteName)
 		{
 			// If the current chip only contains the deleted chip directly as a subchip, it will be removed from the sim and everything is fine.
 			// However, if it is contained indirectly somewhere within one of the chip's subchips (or their subchips, etc), then it's a bit tricky (and
@@ -498,6 +543,7 @@ namespace DLS.Game
 		public void NotifyExit()
 		{
 			simThreadActive = false;
+			ActiveProject.UpdateAndSaveProjectDescription(ActiveProject.description);
 		}
 
 		void SimThread()
@@ -533,6 +579,7 @@ namespace DLS.Game
 				// Also handle advancing a single step
 				if (simPaused && !advanceSingleSimStep)
 				{
+					Simulator.UpdateInPausedState();
 					stopwatchTotal.Stop();
 					Thread.Sleep(10);
 					continue;
@@ -553,7 +600,7 @@ namespace DLS.Game
 				Simulator.stepsPerClockTransition = stepsPerClockTransition;
 				SimChip simChip = rootSimChip;
 				if (simChip == null) continue; // Could potentially be null for a frame when switching between chips
-				Simulator.RunSimulationStep(simChip, inputPins);
+				Simulator.RunSimulationStep(simChip, inputPins, audioState.simAudio);
 
 				// ---- Wait some amount of time (if needed) to try to hit the target ticks per second ----
 				while (true)
@@ -594,7 +641,7 @@ namespace DLS.Game
 		{
 			Simulator.stepsPerClockTransition = stepsPerClockTransition;
 			Simulator.ApplyModifications();
-			Simulator.RunSimulationStep(rootSimChip, inputPins);
+			Simulator.RunSimulationStep(rootSimChip, inputPins, audioState.simAudio);
 			ViewedChip.UpdateStateFromSim(ViewedSimChip, !CanEditViewedChip);
 		}
 
@@ -703,5 +750,47 @@ namespace DLS.Game
 				}
 			}
 		}
-	}
+
+		public void AddNewPinSize(int pinSize)
+		{
+			PinBitCount pinBitCount = pinSize;
+			description.pinBitCounts.Add(pinBitCount);
+			ChipDescription inPin = BuiltinChipCreator.CreateInPin(pinBitCount);
+            ChipDescription outPin = BuiltinChipCreator.CreateOutPin(pinBitCount);
+			ChipDescription bus = BuiltinChipCreator.CreateBus(pinBitCount);
+			ChipDescription busTerminus = BuiltinChipCreator.CreateBusTerminus(pinBitCount);
+            chipLibrary.NotifyChipSaved(inPin);
+            chipLibrary.NotifyChipSaved(outPin);
+            chipLibrary.NotifyChipSaved(bus);
+            chipLibrary.NotifyChipSaved(busTerminus, true);
+
+
+            if (description.ChipCollections.Any(c => c.Name == "IN/OUT"))
+			{
+				description.ChipCollections.First(c => c.Name == "IN/OUT").Chips.Add(inPin.Name);
+                description.ChipCollections.First(c => c.Name == "IN/OUT").Chips.Add(outPin.Name);
+            }
+
+			if(description.ChipCollections.Any(c => c.Name == "BUS"))
+			{
+				description.ChipCollections.First(c => c.Name == "BUS").Chips.Add(bus.Name);
+			}
+        }
+
+		public void AddNewMergeSplit(int a, int b)
+		{
+			KeyValuePair<PinBitCount, PinBitCount> pair = new(Math.Max(a,b), Math.Min(b,a));
+			description.SplitMergePairs.Add(pair);
+			ChipDescription mergeChip = BuiltinChipCreator.CreateMergeChip(pair);
+			ChipDescription splitChip = BuiltinChipCreator.CreateSplitChip(pair);
+			chipLibrary.NotifyChipSaved(mergeChip);
+			chipLibrary.NotifyChipSaved(splitChip);
+            if (description.ChipCollections.Any(c => c.Name == "MERGE/SPLIT"))
+            {
+                description.ChipCollections.First(c => c.Name == "MERGE/SPLIT").Chips.Add(mergeChip.Name);
+                description.ChipCollections.First(c => c.Name == "MERGE/SPLIT").Chips.Add(splitChip.Name);
+            }
+
+        }
+    }
 }

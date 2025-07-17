@@ -3,6 +3,8 @@ using Seb.Vis.Internal;
 using Seb.Vis.Text.FontLoading;
 using Seb.Vis.Text.Rendering;
 using UnityEngine;
+using System.Collections.Generic;
+
 
 namespace Seb.Vis
 {
@@ -92,7 +94,21 @@ namespace Seb.Vis
 			shapeDrawer.AddToLayer(data);
 		}
 
-		public static void SatValQuad(Vector2 centre, Vector2 size, float hue)
+        public static void Squircle(Vector2 centre, Vector2 size, float cornerRadius, Color col)
+        {
+            if (size.x == 0 || size.y == 0 || col.a == 0) return;
+			if (cornerRadius <= 0)
+			{
+				Quad(centre, size, col);
+				return;
+			}
+
+            ShapeData data = ShapeData.CreateSquircle(centre, size, cornerRadius, col, activeMaskMin, activeMaskMax);
+            shapeDrawer.AddToLayer(data);
+        }
+
+
+        public static void SatValQuad(Vector2 centre, Vector2 size, float hue)
 		{
 			if (size.x == 0 || size.y == 0) return;
 
@@ -154,9 +170,39 @@ namespace Seb.Vis
 			shapeDrawer.AddToLayer(data);
 		}
 
-		// ------ Composite Draw Functions ------
+        public static void WedgePolygon(Vector2 center, float radius, float angleStartDeg, float angleEndDeg, Color color, int PinFace, bool isSource)
+        {
+            List<Vector2> points = new List<Vector2>();
+            // plot arc
+            for (int i = 0; i <= 48; i++)
+            {
+                float t = (float)i / 48;
+                float angleDeg = Mathf.Lerp(angleStartDeg, angleEndDeg, t);
+                float angleRad = angleDeg * Mathf.Deg2Rad;
+                Vector2 point = center + new Vector2(Mathf.Cos(angleRad), Mathf.Sin(angleRad)) * (radius*1.002f);
+                points.Add(point);
+            }
+            Vector2 dir = PinFace switch
+            {
+                0 => Vector2.up,
+                1 => Vector2.right,
+                2 => Vector2.down,
+                3 => Vector2.left,
+                _ => Vector2.left
+            };
+			//shortens radius based on pin type to move point away from chip edge
+            float radshift = isSource ? 0.80f : 0.25f;
+			//adds the shifted "center" point
+            points.Add(center + dir * (radius * radshift));
 
-		public static void LinePath(Vector2[] points, float thickness, Color col, float animT = 1)
+            for (int i = 0; i < points.Count - 2; i++)
+            {
+                Triangle(points[i], points[i + 1], points[points.Count - 1], color);
+            }
+        }
+        // ------ Composite Draw Functions ------
+
+        public static void LinePath(Vector2[] points, float thickness, Color col, float animT = 1)
 		{
 			if (col.a == 0 || thickness == 0 || animT <= 0) return;
 

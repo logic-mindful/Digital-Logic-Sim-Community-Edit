@@ -20,6 +20,11 @@ namespace DLS.Game
 			return centrePos_Snapped;
 		}
 
+		public static float ClampToGrid(float number, float min, float max)
+		{
+			return Mathf.Clamp(SnapToGrid(number), Mathf.Max(min,SnapToGrid(min)), Mathf.Min(max,SnapToGrid(max)));
+		}
+
 		public static float SnapToGrid(float v)
 		{
 			int intV = Mathf.RoundToInt(v / GridSize);
@@ -51,6 +56,31 @@ namespace DLS.Game
 			else offset.x = 0;
 
 			return prev + offset;
+		}
+
+		public static Vector2Int GetStateGridDimension(int bitcount)
+		{
+			int h = 1;
+			int w = bitcount;
+
+			int bestH = h;
+			int bestW = w;
+
+			while (2 * h <= bitcount)
+			{
+				h++;
+				while (h * w > bitcount)
+				{
+					w--;
+				}
+				if (w * h == bitcount && w + h < bestH + bestW)
+				{
+					bestW = w;
+					bestH = h;
+				}
+			}
+
+			return new Vector2Int(bestW, bestH);
 		}
 	}
 }

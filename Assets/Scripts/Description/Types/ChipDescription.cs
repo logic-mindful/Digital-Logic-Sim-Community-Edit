@@ -22,6 +22,7 @@ namespace DLS.Description
 		public WireDescription[] Wires;
 		public DisplayDescription[] Displays;
 		public NoteDescription[] Notes;
+		public bool HasCustomLayout = false;
 
 		// ---- Convenience Functions ----
 		public bool HasDisplay() => Displays != null && Displays.Length > 0;
