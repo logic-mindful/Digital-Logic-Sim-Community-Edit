@@ -140,6 +140,7 @@ namespace DLS.Game
 			{
 				if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
 				else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
+				else if (element is NoteInstance note) ActiveDevChip.DeleteNote(note);
 			}
 
 			if (clearSelection) SelectedElements.Clear();
@@ -1056,7 +1057,7 @@ namespace DLS.Game
 			}
 			else if (duplicationSource is NoteInstance noteSrc)
 			{
-				NoteDescription noteDesc = DescriptionCreator.CreateNoteDescriptionForPlacing(instanceID, noteSrc.Description.Colour, noteSrc.Description.Text, noteSrc.Position);
+				NoteDescription noteDesc = DescriptionCreator.CreateNoteDescriptionForPlacing(instanceID, noteSrc.Colour, noteSrc.Description.Text, noteSrc.Position);
 				element = new NoteInstance(noteDesc);
 			}
 			else
