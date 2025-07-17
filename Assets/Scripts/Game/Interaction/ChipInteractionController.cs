@@ -124,7 +124,7 @@ namespace DLS.Game
 		}
 
 		public static bool IsSelected(IMoveable element) => element.IsSelected;
-		
+
 		public void Delete(IMoveable element)
 		{
 			DeleteElements(new List<IMoveable>(new[] { element }));
@@ -244,7 +244,7 @@ namespace DLS.Game
 				CancelEverything();
 			}
 
-        }
+		}
 
 		void HandleMouseInput()
 		{
@@ -330,40 +330,6 @@ namespace DLS.Game
 			// Get description of each element, and start placing a copy of it
 			foreach (IMoveable element in elementsToDuplicate)
 			{
-				ChipDescription desc;
-
-				if (element is SubChipInstance subchip)
-				{
-					desc = subchip.Description;
-				}
-				else if (element is NoteInstance note)
-				{
-					// Create a new NoteDescription for the duplicated note
-					NoteDescription noteDesc = new NoteDescription(
-						IDGenerator.GenerateNewElementID(ActiveDevChip),
-						note.Colour,
-						note.Text,
-						note.Position
-					);
-
-					// Create a new NoteInstance and add it to the duplicated elements
-					IMoveable duplicatedNote = StartPlacingNote(noteDesc, note.Position, true);
-					duplicatedElements.Add(duplicatedNote);
-					duplicatedElementIDFromOriginalID.Add(note.ID, duplicatedNote.ID);
-					continue;
-				}
-				else
-				{
-					DevPinInstance devpin = (DevPinInstance)element;
-					ChipType pinType = ChipTypeHelper.GetPinType(devpin.IsInputPin, devpin.BitCount);
-					desc = BuiltinChipCreator.CreateInputOrOutputPin(pinType);
-
-					// Copy pin description from duplicated pin
-					PinDescription pinDesc = DescriptionCreator.CreatePinDescription(devpin);
-					if (devpin.IsInputPin) desc.InputPins[0] = pinDesc;
-					else desc.OutputPins[0] = pinDesc;
-				}
-
 				IMoveable duplicatedElement = CreateElementFromDuplicationSource(element);
 				StartPlacing(duplicatedElement, element.Position, true);
 				duplicatedElement.StraightLineReferencePoint = element.Position;
@@ -655,7 +621,7 @@ namespace DLS.Game
 				wire.ApplyMoveOffset();
 			}
 
-			
+
 			ActiveDevChip.UndoController.RecordAddElements(SelectedElements, DuplicatedWires.Count > 0);
 
 			DuplicatedWires.Clear();
@@ -937,9 +903,33 @@ namespace DLS.Game
 				StartMovingSelectedItems();
 			}
 
+			// --- Handle NoteInstance separately ---
+			if (elementToPlace is NoteInstance)
+			{
+				// If placing multiple notes, stack them vertically unless duplicating
+				if (SelectedElements.Count > 0 && !isDuplicating)
+				{
+					float spacing = (elementToPlace.SelectionBoundingBox.Size.y + SelectedElements[^1].SelectionBoundingBox.Size.y) / 2;
+					elementToPlace.MoveStartPosition = SelectedElements[^1].MoveStartPosition + Vector2.down * spacing;
+					elementToPlace.HasReferencePointForStraightLineMovement = false;
+				}
+				else
+				{
+					moveElementMouseStartPos = InputHelper.MousePosWorld + elementToPlace.SelectionBoundingBox.Size / 2;
+					elementToPlace.MoveStartPosition = position;
+					elementToPlace.StraightLineReferencePoint = position;
+					elementToPlace.HasReferencePointForStraightLineMovement = isDuplicating;
+				}
+
+				Select(elementToPlace);
+				return;
+			}
+
 			ChipType chipType;
-			if (elementToPlace is DevPinInstance devPinInstance) chipType = devPinInstance.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
-			else chipType = ((SubChipInstance)elementToPlace).ChipType;
+			if (elementToPlace is DevPinInstance devPinInstance)
+				chipType = devPinInstance.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
+			else
+				chipType = ((SubChipInstance)elementToPlace).ChipType;
 
 			// Place bus terminus to right of bus origin
 			if (ChipTypeHelper.IsBusTerminusType(chipType) && !isDuplicating)
@@ -947,8 +937,6 @@ namespace DLS.Game
 				elementToPlace.MoveStartPosition = SelectedElements[^1].MoveStartPosition + Vector2.right * busPairSpacing;
 				elementToPlace.HasReferencePointForStraightLineMovement = false;
 			}
-			// If placing multiple elements simultaneously, place the new element below the previous one
-			// (unless duplicating elements, in which case their relative positions should be preserved)
 			else if (SelectedElements.Count > 0 && !isDuplicating)
 			{
 				float spacing = (elementToPlace.SelectionBoundingBox.Size.y + SelectedElements[^1].SelectionBoundingBox.Size.y) / 2;
@@ -999,8 +987,8 @@ namespace DLS.Game
 			{
 				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.OutputPins[0] : chipDescription.InputPins[0];
 				pinDesc.ID = instanceID;
-                elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
-				
+				elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
+
 			}
 
 			else // SubChip
@@ -1011,7 +999,7 @@ namespace DLS.Game
 
 			return elementToPlace;
 		}
-    
+
 		public void StartPlacingNote(NoteDescription noteDescription)
 		{
 			StartPlacingNote(noteDescription, InputHelper.MousePosWorld, false);
@@ -1031,7 +1019,7 @@ namespace DLS.Game
 
 			IMoveable elementToPlace;
 			int instanceID = IDGenerator.GenerateNewElementID(ActiveDevChip);
-			
+
 			NoteDescription noteDesc = DescriptionCreator.CreateNoteDescriptionForPlacing(instanceID, noteDescription.Colour, noteDescription.Text, position);
 			elementToPlace = new NoteInstance(noteDesc);
 
@@ -1045,7 +1033,7 @@ namespace DLS.Game
 			}
 			else
 			{
-				moveElementMouseStartPos = InputHelper.MousePosWorld + elementToPlace.SelectionBoundingBox.Size / 2;;
+				moveElementMouseStartPos = InputHelper.MousePosWorld + elementToPlace.SelectionBoundingBox.Size / 2; ;
 				elementToPlace.MoveStartPosition = position;
 				elementToPlace.StraightLineReferencePoint = position;
 				elementToPlace.HasReferencePointForStraightLineMovement = isDuplicating;
@@ -1053,8 +1041,8 @@ namespace DLS.Game
 
 			Select(elementToPlace);
 			return elementToPlace;
-    	}
-    
+		}
+
 		IMoveable CreateElementFromDuplicationSource(IMoveable duplicationSource)
 		{
 			IMoveable element;
@@ -1065,6 +1053,11 @@ namespace DLS.Game
 				PinDescription pinDesc = DescriptionCreator.CreatePinDescription(devPinSrc);
 				pinDesc.ID = instanceID;
 				element = new DevPinInstance(pinDesc, devPinSrc.IsInputPin);
+			}
+			else if (duplicationSource is NoteInstance noteSrc)
+			{
+				NoteDescription noteDesc = DescriptionCreator.CreateNoteDescriptionForPlacing(instanceID, noteSrc.Description.Colour, noteSrc.Description.Text, noteSrc.Position);
+				element = new NoteInstance(noteDesc);
 			}
 			else
 			{

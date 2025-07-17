@@ -26,7 +26,7 @@ namespace DLS.Graphics
             UnsavedChanges,
 			Search,
 			ChipLabelPopup,
-			NoteTextPopup
+			NoteTextPopup,
 			SpecialChipMaker
 		}
 
