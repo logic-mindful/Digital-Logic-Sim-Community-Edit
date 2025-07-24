@@ -1,5 +1,7 @@
 using DLS.Description;
 using System;
+using System.Collections;
+using DLS.Description;
 
 namespace DLS.Simulation
 {
@@ -8,8 +10,8 @@ namespace DLS.Simulation
 		public readonly int ID;
 		public readonly SimChip parentChip;
 		public readonly bool isInput;
-		public readonly PinBitCount numberOfBits;
-		public uint State;
+
+		public PinStateValue State;
 
 		public SimPin[] ConnectedTargetPins = Array.Empty<SimPin>();
 
@@ -25,7 +27,7 @@ namespace DLS.Simulation
 		public int numInputConnections;
 		public int numInputsReceivedThisFrame;
 
-		public SimPin(int id, bool isInput, PinBitCount numberOfBits, SimChip parentChip)
+		public SimPin(int id, bool isInput, SimChip parentChip, PinBitCount pinBitCount)
 		{
 			this.parentChip = parentChip;
 			this.isInput = isInput;
@@ -34,10 +36,11 @@ namespace DLS.Simulation
 			latestSourceID = -1;
 			latestSourceParentChipID = -1;
 
-			PinState.SetAllDisconnected(ref State);
+			State.MakeFromPinBitCount(pinBitCount);
+			State.SetAllDisconnected();
 		}
 
-		public bool FirstBitHigh => PinState.FirstBitHigh(State);
+		public bool FirstBitHigh => State.FirstBitHigh();
 
 		public void PropagateSignal()
 		{
@@ -62,21 +65,7 @@ namespace DLS.Simulation
 
 			if (numInputsReceivedThisFrame > 0)
 			{
-				// Has already received input this frame, so choose at random whether to accept conflicting input.
-				// Note: for multi-bit pins, this choice is made identically for all bits, rather than individually.
-				// Todo: maybe consider changing to per-bit in the future...)
-
-				uint OR = source.State | State;
-				uint AND = source.State & State;
-				ushort bitsNew = (ushort)(Simulator.RandomBool() ? OR : AND); // randomly accept or reject conflicting state
-
-				ushort mask = (ushort)(OR >> 16); // tristate flags
-				bitsNew = (ushort)((bitsNew & ~mask) | ((ushort)OR & mask)); // can always accept input for tristated bits
-
-				ushort tristateNew = (ushort)(AND >> 16);
-				uint stateNew = (uint)(bitsNew | (tristateNew << 16));
-				set = stateNew != State;
-				State = stateNew;
+				set = State.HandleConflicts(source.State);
 			}
 			else
 			{

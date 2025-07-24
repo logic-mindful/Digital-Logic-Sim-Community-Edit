@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Seb.Vis.Internal
@@ -12,7 +13,8 @@ namespace Seb.Vis.Internal
 		SatVal = 4,
 		HueQuad = 5,
 		Diamond = 6,
-		PointOutline = 7
+		PointOutline = 7,
+		Squircle = 8
 	}
 
 	public struct ShapeData
@@ -64,7 +66,9 @@ namespace Seb.Vis.Internal
 
 		public static ShapeData CreateSatVal(Vector2 centre, Vector2 size, float value, Vector2 maskMin, Vector2 maskMax) => new(ShapeType.SatVal, centre, size, value, Color.clear, maskMin, maskMax);
 
-		public static ShapeData CreateHueQuad(Vector2 centre, Vector2 size, Vector2 maskMin, Vector2 maskMax) => new(ShapeType.HueQuad, centre, size, 0, Color.clear, maskMin, maskMax);
+		public static ShapeData CreateSquircle(Vector2 centre, Vector2 size, float cornerRadius, Color col, Vector2 maskMin, Vector2 maskMax) => new(ShapeType.Squircle, centre, size, cornerRadius, col, maskMin, maskMax);
+
+        public static ShapeData CreateHueQuad(Vector2 centre, Vector2 size, Vector2 maskMin, Vector2 maskMax) => new(ShapeType.HueQuad, centre, size, 0, Color.clear, maskMin, maskMax);
 
 		public static ShapeData CreateDiamond(Vector2 centre, Vector2 size, Color col, Vector2 maskMin, Vector2 maskMax) => new(ShapeType.Diamond, centre, size, 0, col, maskMin, maskMax);
 

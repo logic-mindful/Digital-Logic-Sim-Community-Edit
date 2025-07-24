@@ -250,6 +250,7 @@ namespace DLS.Graphics
 						int buttonIndex_moveStep = DrawHorizontalButtonGroup(buttonNames_moveSingleStep, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						int buttonIndex_moveJump = DrawHorizontalButtonGroup(buttonNames_jump, interactableStates_move, ref topLeft, panelContentBounds.Width);
 						ChipActionButtons(selectedChipName, ref topLeft, panelContentBounds.Width);
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
 
 						bool moveSingleStepDown = buttonIndex_moveStep == 1;
 						bool moveJumpDown = buttonIndex_moveJump == 1;
@@ -260,6 +261,11 @@ namespace DLS.Graphics
 						if (toggleStarred)
 						{
 							project.SetStarred(selectedChipName, !isStarred, false);
+						}
+
+						if (stats) {
+							ChipStatsMenu.SetChip(selectedChipName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.ChipStats);
 						}
 
 						if (moveSingleStepDown || moveJumpDown) // Move chip down
@@ -298,6 +304,7 @@ namespace DLS.Graphics
 					{
 						// ---- Draw ----
 						ChipCollection collection = collections[selectedCollectionIndex];
+						string selectedCollectionName = collection.Name;
 						ButtonTheme colSource = GetButtonTheme(true, true);
 						DrawHeader(collection.Name, colSource.buttonCols.normal, colSource.textCols.normal, ref topLeft, panelContentBounds.Width);
 
@@ -313,6 +320,12 @@ namespace DLS.Graphics
 						interactableStates_renameDelete[1] = canRenameOrDelete;
 						int buttonIndexEditCollection = DrawHorizontalButtonGroup(buttonNames_collectionRenameOrDelete, interactableStates_renameDelete, ref topLeft, panelContentBounds.Width);
 
+						bool stats = DrawHorizontalButtonGroup(new[]{"STATS"}, null, ref topLeft, panelContentBounds.Width) == 0;
+
+						if (stats) {	
+							CollectionStatsMenu.SetCollection(selectedCollectionName);
+							UIDrawer.SetActiveMenu(UIDrawer.MenuType.CollectionStats);
+						}
 						// ---- Handle button inputs ----
 						if (toggleStarred)
 						{
@@ -450,10 +463,11 @@ namespace DLS.Graphics
 					topLeft = UI.GetCurrentBoundsScope().BottomLeft + Vector2.down * SectionSpacing;
 					MenuHelper.DrawReservedMenuPanel(panelID, UI.GetCurrentBoundsScope());
 				}
-			}
 
-			// Delete confirmation
-			if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
+            }
+
+            // Delete confirmation
+            if (isConfirmingChipDeletion || isConfirmingCollectionDeletion)
 			{
 				using (UI.BeginBoundsScope(true))
 				{
@@ -736,5 +750,6 @@ namespace DLS.Graphics
 				}
 			}
 		}
-	}
+
+    }
 }

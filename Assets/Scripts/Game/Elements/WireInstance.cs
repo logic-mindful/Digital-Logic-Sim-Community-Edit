@@ -312,16 +312,15 @@ namespace DLS.Game
 
 		public Color GetColour(int bitIndex)
 		{
-			Color col = IsFullyConnected ? SourcePin.GetStateCol(bitIndex, false, false) : DrawSettings.ActiveTheme.StateDisconnectedCol;
+			Color col = IsFullyConnected ? SourcePin.GetStateCol(bitIndex, false, false, true) : DrawSettings.ActiveTheme.StateDisconnectedCol;
 
-			if (bitCount != PinBitCount.Bit1 && bitIndex % 2 == 0)
+			if (bitCount != PinBitCount.Bit1 && bitIndex % 2 == 0 && bitCount <= 64)
 			{
 				Color alternatingWireHighlightDisconnected = Color.white * 0.075f;
 				Color alternatingWireHighlightConnected = Color.white * 0.01f;
 				col += IsFullyConnected ? alternatingWireHighlightConnected : alternatingWireHighlightDisconnected;
 			}
-
-			return col;
+				return col;
 		}
 
 		public static Vector2 ClosestPointOnLineSegment(Vector2 p, Vector2 a1, Vector2 a2)

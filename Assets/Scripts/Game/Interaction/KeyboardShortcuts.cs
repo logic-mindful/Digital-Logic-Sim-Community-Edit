@@ -15,10 +15,11 @@ namespace DLS.Game
 		public static bool SaveShortcutTriggered => CtrlShortcutTriggered(KeyCode.S);
 		public static bool LibraryShortcutTriggered => CtrlShortcutTriggered(KeyCode.L);
 		public static bool PreferencesShortcutTriggered => CtrlShortcutTriggered(KeyCode.P);
+		public static bool StatsShortcutTriggered => CtrlShortcutTriggered(KeyCode.T);
 		public static bool CreateNewChipShortcutTriggered => CtrlShortcutTriggered(KeyCode.N);
 		public static bool QuitToMainMenuShortcutTriggered => CtrlShortcutTriggered(KeyCode.Q);
 		public static bool SearchShortcutTriggered => CtrlShortcutTriggered(KeyCode.F);
-
+		public static bool SpecialChipsShortcutTriggered => CtrlShortcutTriggered(KeyCode.B);
 
 		// ---- Misc shortcuts ----
 		public static bool DuplicateShortcutTriggered => MultiModeHeld && InputHelper.IsKeyDownThisFrame(KeyCode.D);

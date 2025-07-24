@@ -9,10 +9,12 @@ namespace DLS.Description
 		TriStateBuffer,
 		Clock,
 		Pulse,
+		Detector,
 
 		// ---- Memory ----
 		dev_Ram_8Bit,
 		Rom_256x16,
+		EEPROM_256x16,
 
 		// ---- Displays ----
 		SevenSegmentDisplay,
@@ -21,33 +23,31 @@ namespace DLS.Description
 		DisplayLED,
 
 		// ---- Merge / Split ----
-		Merge_1To4Bit,
-		Merge_1To8Bit,
-		Merge_4To8Bit,
-		Split_4To1Bit,
-		Split_8To4Bit,
-		Split_8To1Bit,
+		Merge_Pin,
+		Split_Pin,
 
 		// ---- In / Out Pins ----
-		In_1Bit,
-		In_4Bit,
-		In_8Bit,
-		Out_1Bit,
-		Out_4Bit,
-		Out_8Bit,
+		In_Pin,
+		Out_Pin,
 
-		Key,
+        Key,
 
-		// ---- Buses ----
-		Bus_1Bit,
-		BusTerminus_1Bit,
-		Bus_4Bit,
-		BusTerminus_4Bit,
-		Bus_8Bit,
-		BusTerminus_8Bit,
+		Button,
+		Toggle,
+
+		Constant_8Bit,
+
+        // ---- Buses ----
+        Bus,
+		BusTerminus,
 		
 		// ---- Audio ----
-		Buzzer
+		Buzzer,
 
+		// ---- Time ----
+		RTC,
+
+		// ---- Clock ----
+		SPS,
 	}
 }

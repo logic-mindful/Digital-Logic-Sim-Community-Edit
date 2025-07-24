@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.TextCore.Text;
 
 namespace DLS.Description
 {
@@ -14,16 +15,12 @@ namespace DLS.Description
 			{ ChipType.Clock, "CLOCK" },
 			{ ChipType.Pulse, "PULSE" },
 			{ ChipType.TriStateBuffer, "3-STATE BUFFER" },
+			{ ChipType.Constant_8Bit, "CONST" },
+			{ ChipType.Detector, "DETECTOR" },
 			// ---- Memory ----
-			{ ChipType.dev_Ram_8Bit, "dev.RAM-8" },
+			{ ChipType.dev_Ram_8Bit, "RAM-8" },
 			{ ChipType.Rom_256x16, $"ROM 256{mulSymbol}16" },
-			// ---- Split / Merge ----
-			{ ChipType.Split_4To1Bit, "4-1BIT" },
-			{ ChipType.Split_8To1Bit, "8-1BIT" },
-			{ ChipType.Split_8To4Bit, "8-4BIT" },
-			{ ChipType.Merge_4To8Bit, "4-8BIT" },
-			{ ChipType.Merge_1To8Bit, "1-8BIT" },
-			{ ChipType.Merge_1To4Bit, "1-4BIT" },
+            { ChipType.EEPROM_256x16, $"EEPROM 256{mulSymbol}16" },
 
 			// ---- Displays -----
 			{ ChipType.DisplayRGB, "RGB DISPLAY" },
@@ -33,80 +30,72 @@ namespace DLS.Description
 
 			{ ChipType.Buzzer, "BUZZER" },
 
+			{ ChipType.SPS, "SPS" },
+			{ ChipType.RTC, "RTC" },
+
 			// ---- Not really chips (but convenient to treat them as such anyway) ----
 
 			// ---- Inputs/Outputs ----
-			{ ChipType.In_1Bit, "IN-1" },
-			{ ChipType.In_4Bit, "IN-4" },
-			{ ChipType.In_8Bit, "IN-8" },
-			{ ChipType.Out_1Bit, "OUT-1" },
-			{ ChipType.Out_4Bit, "OUT-4" },
-			{ ChipType.Out_8Bit, "OUT-8" },
 			{ ChipType.Key, "KEY" },
-			// ---- Buses ----
-			{ ChipType.Bus_1Bit, "BUS-1" },
-			{ ChipType.Bus_4Bit, "BUS-4" },
-			{ ChipType.Bus_8Bit, "BUS-8" },
-			{ ChipType.BusTerminus_1Bit, "BUS-TERMINUS-1" },
-			{ ChipType.BusTerminus_4Bit, "BUS-TERMINUS-4" },
-			{ ChipType.BusTerminus_8Bit, "BUS-TERMINUS-8" }
+            { ChipType.Button, "BUTTON" },
+			{ ChipType.Toggle, "DIPSWITCH" },
+
 		};
+
 
 		public static string GetName(ChipType type) => Names[type];
 
 		public static bool IsBusType(ChipType type) => IsBusOriginType(type) || IsBusTerminusType(type);
 
-		public static bool IsBusOriginType(ChipType type) => type is ChipType.Bus_1Bit or ChipType.Bus_4Bit or ChipType.Bus_8Bit;
+		public static bool IsBusOriginType(ChipType type) => type is ChipType.Bus;
 
-		public static bool IsBusTerminusType(ChipType type) => type is ChipType.BusTerminus_1Bit or ChipType.BusTerminus_4Bit or ChipType.BusTerminus_8Bit;
+		public static bool IsBusTerminusType(ChipType type) => type is ChipType.BusTerminus;
 
-		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16;
+		public static bool IsRomType(ChipType type) => type == ChipType.Rom_256x16 || type == ChipType.EEPROM_256x16;
 
-		public static ChipType GetCorrespondingBusTerminusType(ChipType type)
+		public static (bool isInput, bool isOutput, PinBitCount numBits) IsInputOrOutputPin(ChipDescription chip)
 		{
-			return type switch
+			return chip.ChipType switch
 			{
-				ChipType.Bus_1Bit => ChipType.BusTerminus_1Bit,
-				ChipType.Bus_4Bit => ChipType.BusTerminus_4Bit,
-				ChipType.Bus_8Bit => ChipType.BusTerminus_8Bit,
-				_ => throw new Exception("No corresponding bus terminus found for type: " + type)
+				ChipType.In_Pin => (true, false, chip.OutputPins[0].BitCount),
+                ChipType.Out_Pin => (false, true, chip.InputPins[0].BitCount),
+                _ => (false, false, new PinBitCount { BitCount = 1 })
 			};
 		}
 
-		public static ChipType GetPinType(bool isInput, PinBitCount numBits)
+		public static string GetDevPinName(bool isInput, PinBitCount numBits)
 		{
-			if (isInput)
-			{
-				return numBits switch
-				{
-					PinBitCount.Bit1 => ChipType.In_1Bit,
-					PinBitCount.Bit4 => ChipType.In_4Bit,
-					PinBitCount.Bit8 => ChipType.In_8Bit,
-					_ => throw new Exception("No input pin type found for bitcount: " + numBits)
-				};
-			}
-
-			return numBits switch
-			{
-				PinBitCount.Bit1 => ChipType.Out_1Bit,
-				PinBitCount.Bit4 => ChipType.Out_4Bit,
-				PinBitCount.Bit8 => ChipType.Out_8Bit,
-				_ => throw new Exception("No output pin type found for bitcount: " + numBits)
-			};
+			return (isInput ? "IN-" : "OUT-") + numBits.BitCount.ToString();
 		}
 
-		public static (bool isInput, bool isOutput, PinBitCount numBits) IsInputOrOutputPin(ChipType type)
+		public static string GetBusName(PinBitCount numBits)
 		{
-			return type switch
-			{
-				ChipType.In_1Bit => (true, false, PinBitCount.Bit1),
-				ChipType.Out_1Bit => (false, true, PinBitCount.Bit1),
-				ChipType.In_4Bit => (true, false, PinBitCount.Bit4),
-				ChipType.Out_4Bit => (false, true, PinBitCount.Bit4),
-				ChipType.In_8Bit => (true, false, PinBitCount.Bit8),
-				ChipType.Out_8Bit => (false, true, PinBitCount.Bit8),
-				_ => (false, false, PinBitCount.Bit1)
-			};
+			return "BUS-" + numBits.ToString();
+		}
+
+        public static string GetBusTerminusName(PinBitCount numBits)
+        {
+            return "BUS-TERMINUS-" + numBits.ToString();
+        }
+
+
+        public static bool IsDevPin(ChipType chipType)
+		{
+			return chipType == ChipType.In_Pin || chipType == ChipType.Out_Pin;
+		}
+		public static bool IsClickableDisplayType(ChipType type) {
+			// Return true for any chiptype that is a clickable display 
+
+			return type == ChipType.Button || type == ChipType.Toggle;
+		}
+
+		public static bool IsInternalDataModifiable(ChipType type) {
+			return type == ChipType.EEPROM_256x16 || type == ChipType.Toggle;
+		}
+
+		public static bool IsMergeSplitChip(ChipType chipType)
+		{
+			return chipType == ChipType.Split_Pin || chipType == ChipType.Merge_Pin;
 		}
 	}
-}
+} 

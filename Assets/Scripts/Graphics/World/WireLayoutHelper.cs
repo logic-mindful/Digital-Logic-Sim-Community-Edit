@@ -22,6 +22,7 @@ namespace DLS.Graphics
 
 			Vector2 dirPrev = Vector2.zero;
 			int numBits = bitWires.Length;
+			int wiresToDraw = (int)(numBits * (SubChipInstance.GetPinDepthMultiplier(wire.bitCount)));
 			float offsetSign = 1;
 
 			// Create layout
@@ -36,10 +37,10 @@ namespace DLS.Graphics
 				// This gives appearance of wires flipping over, rather than bending at an uncomfortable angle, which I think looks better...
 				if (i > 0) offsetSign *= Flip(wireDir, dirPrev);
 
-				for (int bitIndex = 0; bitIndex < numBits; bitIndex++)
+				for (int bitIndex = 0; bitIndex < wiresToDraw; bitIndex++)
 				{
 					WireInstance.BitWire bitWire = bitWires[bitIndex];
-					float bitOffsetDst = (bitIndex - (numBits - 1) / 2f) * thickness * 2 * thicknessOffsetT;
+					float bitOffsetDst = (bitIndex - (wiresToDraw - 1) / 2f) * thickness * 2 * thicknessOffsetT;
 
 					Vector2 bitWireOffset = wirePerpDir * bitOffsetDst;
 					Vector2 posA = i == 0 ? wireCentreA + bitWireOffset : bitWire.Points[i];

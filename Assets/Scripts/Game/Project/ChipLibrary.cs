@@ -19,7 +19,7 @@ namespace DLS.Game
 			foreach (ChipDescription chip in builtinChips)
 			{
 				// Bus terminus chip should not be shown to the user (it is created automatically upon placement of a bus start point)
-				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType) || chip.ChipType == ChipType.dev_Ram_8Bit;
+				bool hidden = ChipTypeHelper.IsBusTerminusType(chip.ChipType);
 
 				AddChipToLibrary(chip, hidden);
 				builtinChipNames.Add(chip.Name);
@@ -55,6 +55,19 @@ namespace DLS.Game
 
 		public ChipDescription GetChipDescription(string name) => descriptionFromNameLookup[name];
 
+		public ChipDescription GetTerminusDescription(PinBitCount bitCount)
+		{
+			foreach(ChipDescription desc in hiddenChips)
+			{
+				if(desc.ChipType == ChipType.BusTerminus && desc.InputPins[0].BitCount == bitCount)
+				{
+					return desc;
+				}
+			}
+
+			throw new System.Exception("Bus terminus not found");
+		}
+
 		public bool TryGetChipDescription(string name, out ChipDescription description) => descriptionFromNameLookup.TryGetValue(name, out description);
 
 		public void RemoveChip(string chipName)
@@ -63,7 +76,7 @@ namespace DLS.Game
 			RebuildChipDescriptionLookup();
 		}
 
-		public void NotifyChipSaved(ChipDescription description)
+		public void NotifyChipSaved(ChipDescription description, bool hidden = false)
 		{
 			// Replace chip description if already exists
 			bool foundChip = false;
@@ -79,10 +92,11 @@ namespace DLS.Game
 			}
 
 			// Otherwise add as new description
-			if (!foundChip) AddChipToLibrary(description);
+			if (!foundChip) AddChipToLibrary(description, hidden);
 
 			RebuildChipDescriptionLookup();
 		}
+
 
 		public void NotifyChipRenamed(ChipDescription description, string nameOld)
 		{
@@ -133,6 +147,7 @@ namespace DLS.Game
 
 		void AddChipToLibrary(ChipDescription description, bool hidden = false)
 		{
+			if(description.ChipType != ChipType.Custom) builtinChipNames.Add(description.Name);
 			if (hidden) hiddenChips.Add(description);
 			else allChips.Add(description);
 		}

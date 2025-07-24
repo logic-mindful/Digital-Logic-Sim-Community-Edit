@@ -10,7 +10,7 @@ namespace DLS.Game
 {
 	public class DevPinInstance : IMoveable
 	{
-		public readonly PinBitCount BitCount;
+		public PinBitCount BitCount;
 		public readonly char[] decimalDisplayCharBuffer = new char[16];
 
 		// Size/Layout info
@@ -19,8 +19,8 @@ namespace DLS.Game
 		public readonly bool IsInputPin;
 		public readonly string Name;
 		public readonly PinInstance Pin;
-		public readonly Vector2Int StateGridDimensions;
-		public readonly Vector2 StateGridSize;
+		public Vector2Int StateGridDimensions;
+		public Vector2 StateGridSize;
 
 		public PinValueDisplayMode pinValueDisplayMode;
 
@@ -37,18 +37,9 @@ namespace DLS.Game
 
 			// Calculate layout info
 			faceDir = new Vector2(IsInputPin ? 1 : -1, 0);
-			StateGridDimensions = BitCount switch
-			{
-				PinBitCount.Bit1 => new Vector2Int(1, 1),
-				PinBitCount.Bit4 => new Vector2Int(2, 2),
-				PinBitCount.Bit8 => new Vector2Int(4, 2),
-				_ => throw new Exception("Bit count not implemented")
-			};
-			StateGridSize = BitCount switch
-			{
-				PinBitCount.Bit1 => Vector2.one * (DevPinStateDisplayRadius * 2 + DevPinStateDisplayOutline * 2),
-				_ => (Vector2)StateGridDimensions * MultiBitPinStateDisplaySquareSize + Vector2.one * DevPinStateDisplayOutline
-			};
+			StateGridDimensions = GridHelper.GetStateGridDimension(BitCount.BitCount);
+			StateGridSize = BitCount.BitCount == 1 ? Vector2.one * (DevPinStateDisplayRadius * 2 + DevPinStateDisplayOutline * 2) : (Vector2)StateGridDimensions * MultiBitPinStateDisplaySquareSize + Vector2.one * DevPinStateDisplayOutline;
+		
 		}
 
 		public Vector2 HandlePosition => Position;
@@ -56,10 +47,14 @@ namespace DLS.Game
 
 		public Vector2 PinPosition
 		{
-			get
+			get	
 			{
-				int gridDst = BitCount is PinBitCount.Bit1 or PinBitCount.Bit4 ? 6 : 9;
-				return HandlePosition + faceDir * (GridSize * gridDst);
+				if(BitCount.BitCount is 1 or 4 or 8)
+				{
+                    return HandlePosition + faceDir * (GridSize * (BitCount.BitCount is 1 or 4 ? 6 : 9));
+                }
+
+				return StateDisplayPosition + faceDir * (StateGridSize.x / 2 + 2 * GridSize);
 			}
 		}
 
@@ -88,12 +83,12 @@ namespace DLS.Game
 
 		public int GetStateDecimalDisplayValue()
 		{
-			uint rawValue = PinState.GetBitStates(Pin.State);
+			uint rawValue = Pin.State.GetValue();
 			int displayValue = (int)rawValue;
 
 			if (pinValueDisplayMode == PinValueDisplayMode.SignedDecimal)
 			{
-				displayValue = Maths.TwosComplement(rawValue, (int)BitCount);
+				displayValue = Maths.TwosComplement(rawValue, Math.Min((int)BitCount,32));
 			}
 
 			return displayValue;
@@ -119,7 +114,7 @@ namespace DLS.Game
 
 		public void ToggleState(int bitIndex)
 		{
-			PinState.Toggle(ref Pin.PlayerInputState, bitIndex);
+			Pin.PlayerInputState.ToggleBit(bitIndex);
 		}
 
 		public bool PointIsInInteractionBounds(Vector2 point) => PointIsInHandleBounds(point) || PointIsInStateIndicatorBounds(point);
@@ -127,5 +122,12 @@ namespace DLS.Game
 		public bool PointIsInStateIndicatorBounds(Vector2 point) => Maths.PointInCircle2D(point, StateDisplayPosition, DevPinStateDisplayRadius);
 
 		public bool PointIsInHandleBounds(Vector2 point) => HandleBounds().PointInBounds(point);
-	}
+
+		public void ChangeBitCount(ushort bitcount)
+		{
+			BitCount.BitCount = bitcount;
+            StateGridDimensions = GridHelper.GetStateGridDimension(BitCount.BitCount);
+            StateGridSize = BitCount.BitCount == 1 ? Vector2.one * (DevPinStateDisplayRadius * 2 + DevPinStateDisplayOutline * 2) : (Vector2)StateGridDimensions * MultiBitPinStateDisplaySquareSize + Vector2.one * DevPinStateDisplayOutline;
+        }
+    }
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using DLS.Game;
 using DLS.Simulation;
 using Seb.Vis.UI;
@@ -18,10 +19,15 @@ namespace DLS.Graphics
 			MainMenu,
 			RebindKeyChip,
 			RomEdit,
+			ChipStats,
+			CollectionStats,
+			ProjectStats,
 			PulseEdit,
-			UnsavedChanges,
+            ConstantEdit,
+            UnsavedChanges,
 			Search,
-			ChipLabelPopup
+			ChipLabelPopup,
+			SpecialChipMaker
 		}
 
 		static MenuType activeMenuOld;
@@ -66,10 +72,15 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.PinRename) PinEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RebindKeyChip) RebindKeyChipMenu.DrawMenu();
 			else if (menuToDraw == MenuType.RomEdit) RomEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ChipStats) ChipStatsMenu.DrawMenu(); 
+			else if (menuToDraw == MenuType.CollectionStats) CollectionStatsMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ProjectStats) ProjectStatsMenu.DrawMenu();
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.ConstantEdit)  ConstantEditMenu.DrawMenu();
+			else if (menuToDraw == MenuType.SpecialChipMaker) SpecialChipMakerMenu.DrawMenu();
 			else
 			{
 				bool showSimPausedBanner = project.simPaused;
@@ -104,6 +115,9 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.Search) SearchPopup.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ChipLabelPopup) ChipLabelMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.PulseEdit) PulseEditMenu.OnMenuOpened();
+                else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();
+
 
 				if (InInputBlockingMenu() && Project.ActiveProject != null && Project.ActiveProject.controller != null)
 				{

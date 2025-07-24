@@ -12,7 +12,7 @@ Shader "Vis/Draw"
         Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
-        {
+        { 
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -64,6 +64,7 @@ Shader "Vis/Draw"
             static const int HUE_TYPE = 5;
             static const int DIAMOND_TYPE = 6;
             static const int POINT_OUTLINE_TYPE = 7;
+            static const int SQUIRCLE_TYPE = 8;
 
             static const bool AA_Enabled = true;
 
@@ -145,7 +146,7 @@ Shader "Vis/Draw"
                     }
                 }
                 // Quad (2 = regular, 4 = saturation/value display, 5 = hue display)
-                else if (instance.type == QUAD_TYPE || instance.type == SATVAL_TYPE || instance.type == HUE_TYPE)
+                else if (instance.type == QUAD_TYPE || instance.type == SATVAL_TYPE || instance.type == HUE_TYPE || instance.type == SQUIRCLE_TYPE)
                 {
                     float3 worldCentre = float3(instance.a * LayerScale + LayerOffset, 0);
                     float4 size = float4(instance.b.xy * LayerScale, 1, 1);
@@ -154,7 +155,9 @@ Shader "Vis/Draw"
                     o.posLocal = vertexLocal;
                     o.sizeData = instance.b.xy;
 
-                    if (instance.type == 4) o.col = instance.param; // Override col to store hue value
+                    if (instance.type == SQUIRCLE_TYPE) o.lineEndPoints.x = instance.param; // Store corner radius in lineEndPoints if SQUIRCLE (to not make an even bigger v2f)
+                    else if (instance.type == 4) o.col = instance.param; // Override col to store hue value
+
                 }
                 // Triangle
                 else if (instance.type == TRIANGLE_TYPE)
@@ -213,6 +216,12 @@ Shader "Vis/Draw"
                 float t = saturate(dot(pointDelta, lineDelta) / sqrLineLength);
                 float2 pointOnLineSeg = a1 + lineDelta * t;
                 return length(p - pointOnLineSeg);
+            }
+
+            float squircleSdf(float2 position, float2 halfSize, float cornerRadius)
+            {
+                position = abs(position) - halfSize + cornerRadius;
+                return length(max(position, 0.0)) + min(max(position.x, position.y), 0.0) - cornerRadius;
             }
 
             // Alternate AA formulation which seems to work a bit better for very thin lines?
@@ -313,6 +322,19 @@ Shader "Vis/Draw"
                 return i.col;
             }
 
+            float4 squircleDraw(v2f i)
+            {
+                float sdf = squircleSdf(i.posLocal, i.sizeData / 2, i.lineEndPoints.x); // LineEndPoints.x has been overwritten with the corner radius
+                float alpha = CalculateAlphaFromSDF(sdf, i);
+                float3 col = i.col.rgb;
+
+                
+                return float4(col, alpha * i.col.a);
+
+            }
+
+            
+
             float4 frag(v2f i) : SV_Target
             {
                 // Mask
@@ -326,6 +348,8 @@ Shader "Vis/Draw"
                 if (i.shapeType == SATVAL_TYPE) return satValQuadDraw(i);
                 if (i.shapeType == HUE_TYPE) return hueQuadDraw(i);
                 if (i.shapeType == DIAMOND_TYPE) return diamondDraw(i);
+                if (i.shapeType == SQUIRCLE_TYPE) return squircleDraw(i);
+
                 return float4(0, 0, 0, 1);
             }
             ENDCG

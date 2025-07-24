@@ -486,7 +486,12 @@ namespace DLS.Graphics
 
 		static void Quit()
 		{
-			Application.Quit();
+			#if UNITY_EDITOR
+				// There should be a NullReferenceException when quitting, but it does not affect the application.
+				UnityEditor.EditorApplication.isPlaying = false;
+			#else
+				Application.Quit();
+			#endif
 		}
 
 		enum MenuScreen
