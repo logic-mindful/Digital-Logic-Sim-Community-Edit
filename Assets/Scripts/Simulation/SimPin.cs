@@ -31,7 +31,6 @@ namespace DLS.Simulation
 		{
 			this.parentChip = parentChip;
 			this.isInput = isInput;
-			this.numberOfBits = numberOfBits;
 			ID = id;
 			latestSourceID = -1;
 			latestSourceParentChipID = -1;
