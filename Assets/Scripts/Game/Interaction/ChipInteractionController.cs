@@ -63,6 +63,17 @@ namespace DLS.Game
 			HandleMouseInput();
 		}
 
+		public void Delete(IMoveable element, bool clearSelection = true, bool recordUndo = true)
+		{
+			if (!HasControl) return;
+			if (recordUndo) ActiveDevChip.UndoController.RecordDeleteElements(new List<IMoveable>(new[] { element }));
+			if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
+			if (element is NoteInstance noteInstance) ActiveDevChip.DeleteNote(noteInstance);
+			else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
+
+			if (clearSelection) SelectedElements.Clear();
+		}
+
 		// Don't allow interaction with wire that's currently being placed (this would allow it to try to connect to itself for example...)
 		public bool CanInteractWithWire(WireInstance wire) => CanInteract && wire != WireToPlace;
 
@@ -113,7 +124,7 @@ namespace DLS.Game
 		}
 
 		public static bool IsSelected(IMoveable element) => element.IsSelected;
-		
+
 		public void Delete(IMoveable element)
 		{
 			DeleteElements(new List<IMoveable>(new[] { element }));
@@ -129,6 +140,7 @@ namespace DLS.Game
 			{
 				if (element is SubChipInstance subChip) ActiveDevChip.DeleteSubChip(subChip);
 				else if (element is DevPinInstance devPin) ActiveDevChip.DeleteDevPin(devPin);
+				else if (element is NoteInstance note) ActiveDevChip.DeleteNote(note);
 			}
 
 			if (clearSelection) SelectedElements.Clear();
@@ -233,7 +245,7 @@ namespace DLS.Game
 				CancelEverything();
 			}
 
-        }
+		}
 
 		void HandleMouseInput()
 		{
@@ -601,6 +613,7 @@ namespace DLS.Game
 					ActiveDevChip.AddNewSubChip(subchip, false);
 				}
 				else if (elementToPlace is DevPinInstance devPin) ActiveDevChip.AddNewDevPin(devPin, false);
+				else if (elementToPlace is NoteInstance note) ActiveDevChip.AddNote(note, false);
 			}
 
 			foreach (WireInstance wire in DuplicatedWires)
@@ -609,7 +622,9 @@ namespace DLS.Game
 				wire.ApplyMoveOffset();
 			}
 
+
 			ActiveDevChip.UndoController.RecordAddElements(SelectedElements, DuplicatedWires.Count > 0);
+
 			DuplicatedWires.Clear();
 			OnFinishedPlacingItems();
 
@@ -889,9 +904,33 @@ namespace DLS.Game
 				StartMovingSelectedItems();
 			}
 
+			// --- Handle NoteInstance separately ---
+			if (elementToPlace is NoteInstance)
+			{
+				// If placing multiple notes, stack them vertically unless duplicating
+				if (SelectedElements.Count > 0 && !isDuplicating)
+				{
+					float spacing = (elementToPlace.SelectionBoundingBox.Size.y + SelectedElements[^1].SelectionBoundingBox.Size.y) / 2;
+					elementToPlace.MoveStartPosition = SelectedElements[^1].MoveStartPosition + Vector2.down * spacing;
+					elementToPlace.HasReferencePointForStraightLineMovement = false;
+				}
+				else
+				{
+					moveElementMouseStartPos = InputHelper.MousePosWorld + elementToPlace.SelectionBoundingBox.Size / 2;
+					elementToPlace.MoveStartPosition = position;
+					elementToPlace.StraightLineReferencePoint = position;
+					elementToPlace.HasReferencePointForStraightLineMovement = isDuplicating;
+				}
+
+				Select(elementToPlace);
+				return;
+			}
+
 			ChipType chipType;
-			if (elementToPlace is DevPinInstance devPinInstance) chipType = devPinInstance.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
-			else chipType = ((SubChipInstance)elementToPlace).ChipType;
+			if (elementToPlace is DevPinInstance devPinInstance)
+				chipType = devPinInstance.IsInputPin ? ChipType.In_Pin : ChipType.Out_Pin;
+			else
+				chipType = ((SubChipInstance)elementToPlace).ChipType;
 
 			// Place bus terminus to right of bus origin
 			if (ChipTypeHelper.IsBusTerminusType(chipType) && !isDuplicating)
@@ -899,8 +938,6 @@ namespace DLS.Game
 				elementToPlace.MoveStartPosition = SelectedElements[^1].MoveStartPosition + Vector2.right * busPairSpacing;
 				elementToPlace.HasReferencePointForStraightLineMovement = false;
 			}
-			// If placing multiple elements simultaneously, place the new element below the previous one
-			// (unless duplicating elements, in which case their relative positions should be preserved)
 			else if (SelectedElements.Count > 0 && !isDuplicating)
 			{
 				float spacing = (elementToPlace.SelectionBoundingBox.Size.y + SelectedElements[^1].SelectionBoundingBox.Size.y) / 2;
@@ -951,8 +988,8 @@ namespace DLS.Game
 			{
 				PinDescription pinDesc = ioPinInfo.isInput ? chipDescription.OutputPins[0] : chipDescription.InputPins[0];
 				pinDesc.ID = instanceID;
-                elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
-				
+				elementToPlace = new DevPinInstance(pinDesc, ioPinInfo.isInput);
+
 			}
 
 			else // SubChip
@@ -961,6 +998,49 @@ namespace DLS.Game
 				elementToPlace = new SubChipInstance(chipDescription, subChipDesc);
 			}
 
+			return elementToPlace;
+		}
+
+		public void StartPlacingNote(NoteDescription noteDescription)
+		{
+			StartPlacingNote(noteDescription, InputHelper.MousePosWorld, false);
+		}
+
+		public IMoveable StartPlacingNote(NoteDescription noteDescription, Vector2 position, bool isDuplicating)
+		{
+			newElementsAreDuplicatedElements = isDuplicating;
+
+			if (!isPlacingNewElements)
+			{
+				CancelEverything();
+				isPlacingNewElements = true;
+				hasExittedMultiModeSincePlacementStart = false;
+				StartMovingSelectedItems();
+			}
+
+			IMoveable elementToPlace;
+			int instanceID = IDGenerator.GenerateNewElementID(ActiveDevChip);
+
+			NoteDescription noteDesc = DescriptionCreator.CreateNoteDescriptionForPlacing(instanceID, noteDescription.Colour, noteDescription.Text, position);
+			elementToPlace = new NoteInstance(noteDesc);
+
+			// If placing multiple elements simultaneously, place the new element below the previous one
+			// (unless is duplicating elements, in which case their relative positions should be preserved)
+			if (SelectedElements.Count > 0 && !isDuplicating)
+			{
+				float spacing = (elementToPlace.SelectionBoundingBox.Size.y + SelectedElements[^1].SelectionBoundingBox.Size.y) / 2;
+				elementToPlace.MoveStartPosition = SelectedElements[^1].MoveStartPosition + Vector2.down * spacing;
+				elementToPlace.HasReferencePointForStraightLineMovement = false;
+			}
+			else
+			{
+				moveElementMouseStartPos = InputHelper.MousePosWorld + elementToPlace.SelectionBoundingBox.Size / 2; ;
+				elementToPlace.MoveStartPosition = position;
+				elementToPlace.StraightLineReferencePoint = position;
+				elementToPlace.HasReferencePointForStraightLineMovement = isDuplicating;
+			}
+
+			Select(elementToPlace);
 			return elementToPlace;
 		}
 
@@ -974,6 +1054,11 @@ namespace DLS.Game
 				PinDescription pinDesc = DescriptionCreator.CreatePinDescription(devPinSrc);
 				pinDesc.ID = instanceID;
 				element = new DevPinInstance(pinDesc, devPinSrc.IsInputPin);
+			}
+			else if (duplicationSource is NoteInstance noteSrc)
+			{
+				NoteDescription noteDesc = DescriptionCreator.CreateNoteDescriptionForPlacing(instanceID, noteSrc.Colour, noteSrc.Description.Text, noteSrc.Position);
+				element = new NoteInstance(noteDesc);
 			}
 			else
 			{

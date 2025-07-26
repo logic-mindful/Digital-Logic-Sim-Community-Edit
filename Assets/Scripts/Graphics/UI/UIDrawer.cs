@@ -27,6 +27,7 @@ namespace DLS.Graphics
             UnsavedChanges,
 			Search,
 			ChipLabelPopup,
+			NoteTextPopup,
 			SpecialChipMaker
 		}
 
@@ -78,6 +79,7 @@ namespace DLS.Graphics
 			else if (menuToDraw == MenuType.UnsavedChanges) UnsavedChangesPopup.DrawMenu();
 			else if (menuToDraw == MenuType.Search) SearchPopup.DrawMenu();
 			else if (menuToDraw == MenuType.ChipLabelPopup) ChipLabelMenu.DrawMenu();
+			else if (menuToDraw == MenuType.NoteTextPopup) NoteTextMenu.DrawMenu();
 			else if (menuToDraw == MenuType.PulseEdit) PulseEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.ConstantEdit)  ConstantEditMenu.DrawMenu();
 			else if (menuToDraw == MenuType.SpecialChipMaker) SpecialChipMakerMenu.DrawMenu();
@@ -114,6 +116,7 @@ namespace DLS.Graphics
 				else if (ActiveMenu == MenuType.RomEdit) RomEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.Search) SearchPopup.OnMenuOpened();
 				else if (ActiveMenu == MenuType.ChipLabelPopup) ChipLabelMenu.OnMenuOpened();
+				else if (ActiveMenu == MenuType.NoteTextPopup) NoteTextMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.PulseEdit) PulseEditMenu.OnMenuOpened();
                 else if (ActiveMenu == MenuType.ConstantEdit) ConstantEditMenu.OnMenuOpened();
 				else if (ActiveMenu == MenuType.SpecialChipMaker) SpecialChipMakerMenu.OnMenuOpened();

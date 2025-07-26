@@ -22,6 +22,7 @@ namespace DLS.Graphics
 
 		public const float FontSizeChipName = 0.25f;
 		public const float FontSizePinLabel = 0.2f;
+		public const float FontSizeNoteText = 0.2f;
 
 		public const float SubChipPinInset = 0.015f;
 		public const float SelectionBoundsPadding = 0.08f;
@@ -51,19 +52,20 @@ namespace DLS.Graphics
 		public static readonly ThemeDLS ActiveTheme = CreateTheme();
 		public static readonly UIThemeDLS ActiveUITheme = CreateUITheme();
 
-        // ---- Helper functions ----
-		public static Color GetStateColour(bool isHigh, uint index,bool hover = false)
+		// ---- Helper functions ----
+		public static Color GetStateColour(bool isHigh, uint index, bool hover = false)
 		{
 			index = (uint)Mathf.Min(index, ActiveTheme.StateHighCol.Length - 1); // clamp just to be safe...
 			if (!isHigh && hover) return ActiveTheme.StateHoverCol[index];
 			return isHigh ? ActiveTheme.StateHighCol[index] : ActiveTheme.StateLowCol[index];
 		}
 
-		public static Color GetFlatColour(bool isHigh, uint index, bool hover = false) {
-            index = (uint)Mathf.Min(index, ActiveTheme.FlatColors.Length - 1); // clamp just to be safe...
-            if (!isHigh && hover) return ActiveTheme.FlatColorsHover[index];
-            return ActiveTheme.FlatColors[index];
-        }
+		public static Color GetFlatColour(bool isHigh, uint index, bool hover = false)
+		{
+			index = (uint)Mathf.Min(index, ActiveTheme.FlatColors.Length - 1); // clamp just to be safe...
+			if (!isHigh && hover) return ActiveTheme.FlatColorsHover[index];
+			return ActiveTheme.FlatColors[index];
+		}
 
 		static ThemeDLS CreateTheme()
 		{
@@ -93,22 +95,34 @@ namespace DLS.Graphics
 				new(whiteHigh, whiteHigh, whiteHigh)
 			};
 
+
+			Color[] note =
+				  {
+				new Color(0.4f, 0.3f, 0.3f),
+				new Color(0.45f, 0.34f, 0.14f),
+				new Color(0.3f, 0.4f, 0.3f),
+				new Color(0.3f, 0.34f, 0.5f),
+				new Color(0.39f, 0.28f, 0.38f),
+				new Color(0.45f, 0.2f, 0.45f),
+				new Color(0.6f, 0.6f, 0.6f)
+			};
+
 			Color[] flatColors =
 			{
-                MakeCol255(155, 34, 38),
-                MakeCol255(202, 103, 2),
-                MakeCol255(238, 155, 0),
+				MakeCol255(155, 34, 38),
+				MakeCol255(202, 103, 2),
+				MakeCol255(238, 155, 0),
 				MakeCol255(233, 216, 166),
 				MakeCol255(0, 205, 226),
-                MakeCol255(238, 130, 238),
-                MakeCol255(212, 4, 116),
+				MakeCol255(238, 130, 238),
+				MakeCol255(212, 4, 116),
 				new(whiteHigh, whiteHigh, whiteHigh)
 			};
+
 			Color[] stateHover = stateLow.Select(c => Brighten(c, 0.075f)).ToArray();
-            Color[] flatHover = flatColors.Select(c => Brighten(c, 0.075f)).ToArray();
+			Color[] flatHover = flatColors.Select(c => Brighten(c, 0.075f)).ToArray();
 
-
-            return new ThemeDLS
+			return new ThemeDLS
 			{
 				SelectionBoxCol = new Color(1, 1, 1, 0.1f),
 				SelectionBoxMovingCol = new Color(1, 1, 1, 0.125f),
@@ -116,6 +130,7 @@ namespace DLS.Graphics
 				SelectionBoxOtherIsInvaldCol = MakeCol255(243, 150, 75, 80),
 				StateLowCol = stateLow,
 				StateHighCol = stateHigh,
+				NoteCol = note,
 				StateHoverCol = stateHover,
 				StateDisconnectedCol = Color.black,
 				DevPinHandle = MakeCol(0.31f),
@@ -125,10 +140,10 @@ namespace DLS.Graphics
 				PinHighlightCol = Color.white,
 				PinInvalidCol = MakeCol(0.15f),
 				SevenSegCols = new Color[]
-				{
-					new(0.1f, 0.09f, 0.09f), new(1, 0.32f, 0.28f), new(0.19f, 0.15f, 0.15f), // Col A: OFF, ON, HIGHLIGHT
+			  {
+		  new(0.1f, 0.09f, 0.09f), new(1, 0.32f, 0.28f), new(0.19f, 0.15f, 0.15f), // Col A: OFF, ON, HIGHLIGHT
 					new(0.09f, 0.09f, 0.1f), new(0, 0.61f, 1f), new(0.15f, 0.15f, 0.19f) // Col B: OFF, ON, HIGHLIGHT
-				},
+					  },
 				BackgroundCol = MakeCol255(66, 66, 69),
 				GridCol = MakeCol255(49, 49, 51),
 				FlatColors = flatColors,
@@ -266,6 +281,8 @@ namespace DLS.Graphics
 			public Color[] StateHighCol;
 			public Color[] StateHoverCol;
 			public Color[] StateLowCol;
+			public Color[] NoteCol;
+			public Color[] DisplayLEDCols; // Disconnected, Off, On
 			public Color[] FlatColors;
 			public Color[] FlatColorsHover;
 			public Color[] PinSizeIndicatorColors;
