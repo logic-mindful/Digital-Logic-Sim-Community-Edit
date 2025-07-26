@@ -20,7 +20,7 @@ namespace DLS.Simulation
     }
     public static class Simulator
 	{
-		// Constant for when the chip caching shouldn't happen -- simply because we lack type to store bigger values.
+    // Constant for when the chip caching shouldn't happen -- simply because we lack type to store bigger values.
 		// If a chip has a bigger input than that, it will not be cache
 		public const int MAX_INPUT_WIDTH_WHEN_AUTO_CACHING = 16;
 

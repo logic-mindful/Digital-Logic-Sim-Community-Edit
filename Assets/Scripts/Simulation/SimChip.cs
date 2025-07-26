@@ -99,8 +99,8 @@ namespace DLS.Simulation
 			{
 				case ChipType.Nand:
 				case ChipType.TriStateBuffer:
-                case ChipType.Detector:
-                case ChipType.Merge_Pin:
+        case ChipType.Detector:
+        case ChipType.Merge_Pin:
 				case ChipType.Split_Pin:
 				case ChipType.Constant_8Bit: // Not stateless, but state can't change inside sim.
 					return true;
@@ -215,7 +215,7 @@ namespace DLS.Simulation
 			}
 			return biggestPinWidth;
 		}
-
+    
 		public void ResetReceivedFlagsOnAllPins()
 		{
 			foreach(SimPin pin in InputPins)
