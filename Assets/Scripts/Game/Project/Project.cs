@@ -127,6 +127,9 @@ namespace DLS.Game
 		{
 			if (chipLibrary.TryGetChipDescription(subchip.Description.Name, out ChipDescription description))
 			{
+				Simulator.useCaching = false; // Disable caching while viewing so subchips actually show what they are doing
+				Simulator.isCreatingACache = false; // Cancel any cache creation that might be going on
+
 				SimChip simChipToView = ViewedChip.SimChip.GetSubChipFromID(subchip.ID);
 
 				DevChipInstance viewChip = DevChipInstance.LoadFromDescriptionTest(description, chipLibrary).devChip;
@@ -145,6 +148,8 @@ namespace DLS.Game
 				chipViewStack.Pop();
 				controller.CancelEverything();
 				UpdateViewedChipsString();
+
+				if (chipViewStack.Count == 1) Simulator.useCaching = true; // Left View mode, so turn caching back on
 			}
 		}
 

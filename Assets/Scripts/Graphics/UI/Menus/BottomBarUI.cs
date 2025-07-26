@@ -13,7 +13,7 @@ namespace DLS.Graphics
 	{
 		public const float barHeight = 3;
 		const float padY = 0.3f;
-		const float buttonSpacing = 0.25f;
+		public const float buttonSpacing = 0.25f;
 		const float buttonHeight = barHeight - padY * 2;
 
 		const string shortcutTextCol = "<color=#666666ff>";

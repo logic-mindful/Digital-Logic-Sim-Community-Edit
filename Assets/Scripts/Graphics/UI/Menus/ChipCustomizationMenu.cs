@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using DLS.Simulation;
 using Seb.Helpers;
 using Seb.Vis;
 using Seb.Vis.UI;
@@ -24,6 +25,7 @@ namespace DLS.Graphics
             "Layout: Custom"
         };
 
+		static readonly string[] cachingOptions = { "Caching: Off", "Caching: On" };
 
         // ---- State ----
         static SubChipInstance[] subChipsWithDisplays;
@@ -34,8 +36,11 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_ColourPicker = new("CustomizeMenu_ChipCol");
 		static readonly UIHandle ID_ColourHexInput = new("CustomizeMenu_ChipColHexInput");
 		static readonly UIHandle ID_NameDisplayOptions = new("CustomizeMenu_NameDisplayOptions");
-        static readonly UIHandle ID_LayoutOptions = new("CustomizeMenu_LayoutOptions");
-        static readonly UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
+		static readonly UIHandle ID_CachingOptions = new("CustomizeMenu_CachingOptions");
+		static readonly UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
+
+    static readonly UIHandle ID_LayoutOptions = new("CustomizeMenu_LayoutOptions");
+    static readonly UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
 		static readonly Func<string, bool> hexStringInputValidator = ValidateHexStringInput;
 		public static bool isCustomLayout;
 		public static bool isDraggingPin;
@@ -132,6 +137,40 @@ namespace DLS.Graphics
 				UpdateChipColFromHexString(hexColInput.text);
 			}
 
+			// ---- Chip caching UI ----
+			UI.DrawText("Chip Caching:", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeDefault, NextPos(1), Anchor.TopLeft, Color.white);
+			SimChip chip = Project.ActiveProject.ViewedChip.SimChip;
+			if (chip.IsCombinational())
+			{
+				int numberOfInputBits = chip.CalculateNumberOfInputBits();
+				if (numberOfInputBits <= Simulator.MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
+				{
+					UI.DrawText("This chip is being cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+				}
+				else if (numberOfInputBits <= Simulator.MAX_NUM_INPUT_BITS_WHEN_USER_CACHING)
+				{
+					int shouldBeCachedNum = UI.WheelSelector(ID_CachingOptions, cachingOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
+					bool shouldBeCached = false;
+					if (shouldBeCachedNum == 1) shouldBeCached = true;
+					ChipSaveMenu.ActiveCustomizeDescription.ShouldBeCached = shouldBeCached;
+					UI.DrawText("WARNING: Caching chips with many", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("input bits significantly", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("increases the time required to", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("create the cache and may also", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("increase memory consumption!", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+				}
+				else
+				{
+					UI.DrawText("This chip has too many input", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+					UI.DrawText("bits to be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+				}
+			}
+			else
+			{
+				UI.DrawText("Non-combinational chips", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+				UI.DrawText("can not be cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
+			}
+
 			// ---- Displays UI ----
 			Color labelCol = ColHelper.Darken(theme.MenuPanelCol, 0.01f);
 			Vector2 labelPos = NextPos(1);
@@ -206,12 +245,19 @@ namespace DLS.Graphics
 			WheelSelectorState nameDisplayWheelState = UI.GetWheelSelectorState(ID_NameDisplayOptions);
 			nameDisplayWheelState.index = (int)ChipSaveMenu.ActiveCustomizeDescription.NameLocation;
 
-            // Init layout mode by checking if any pins have custom positions
-            isCustomLayout = Project.ActiveProject.ViewedChip.HasCustomLayout;
+			// Init cache setting
+			WheelSelectorState cacheSettingWheelState = UI.GetWheelSelectorState(ID_CachingOptions);
+			bool cacheBool = ChipSaveMenu.ActiveCustomizeDescription.ShouldBeCached;
+			int cacheInt = 0;
+			if (cacheBool) cacheInt = 1;
+			cacheSettingWheelState.index = cacheInt;
+      
+      // Init layout mode by checking if any pins have custom positions
+      isCustomLayout = Project.ActiveProject.ViewedChip.HasCustomLayout;
 
-            WheelSelectorState layoutWheelState = UI.GetWheelSelectorState(ID_LayoutOptions);
-            layoutWheelState.index = isCustomLayout ? 1 : 0;
-        }
+      WheelSelectorState layoutWheelState = UI.GetWheelSelectorState(ID_LayoutOptions);
+      layoutWheelState.index = isCustomLayout ? 1 : 0;
+    }
 
 		static void UpdateCustomizeDescription()
 		{

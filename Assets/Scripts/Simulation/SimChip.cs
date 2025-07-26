@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using DLS.Description;
 
@@ -8,6 +9,7 @@ namespace DLS.Simulation
 	{
 		public readonly ChipType ChipType;
 		public readonly int ID;
+		public readonly string Name;
 
 		// Some builtin chips, such as RAM, require an internal state for memory
 		// (can also be used for other arbitrary chip-specific data)
@@ -15,6 +17,7 @@ namespace DLS.Simulation
 		public readonly bool IsBuiltin;
 		public SimPin[] InputPins = Array.Empty<SimPin>();
 		public int numConnectedInputs;
+		public bool shouldBeCached; // True, if the user specifically wanted this chip to be cached
 
 		public int numInputsReady;
 		public SimPin[] OutputPins = Array.Empty<SimPin>();
@@ -30,7 +33,9 @@ namespace DLS.Simulation
 		{
 			SubChips = subChips;
 			ID = id;
+			Name = desc.Name;
 			ChipType = desc.ChipType;
+			shouldBeCached = desc.ShouldBeCached;
 			IsBuiltin = ChipType != ChipType.Custom;
 
 			// ---- Create pins (don't allocate unnecessarily as very many sim chips maybe created!) ----
@@ -83,6 +88,133 @@ namespace DLS.Simulation
 			{
 				InternalState = new uint[internalState.Length];
 				UpdateInternalState(internalState);
+			}
+		}
+
+		// Returns true, when this chip is purely combinational / stateless. This is the case, when the outputs of this chip depend entirely on the inputs and on nothing else.
+		public bool IsCombinational()
+		{
+			// Handle built in chips
+			switch (ChipType)
+			{
+				case ChipType.Nand:
+				case ChipType.TriStateBuffer:
+				case ChipType.Merge_1To4Bit:
+				case ChipType.Merge_1To8Bit:
+				case ChipType.Merge_4To8Bit:
+				case ChipType.Split_4To1Bit:
+				case ChipType.Split_8To4Bit:
+				case ChipType.Split_8To1Bit:
+					return true;
+				case ChipType.Clock:
+				case ChipType.Pulse:
+				case ChipType.dev_Ram_8Bit:
+				case ChipType.Rom_256x16:
+				case ChipType.SevenSegmentDisplay:
+				case ChipType.DisplayRGB:
+				case ChipType.DisplayDot:
+				case ChipType.DisplayLED:
+				case ChipType.Key:
+				case ChipType.Buzzer:
+					return false;
+			}
+
+			// Chip isn't combinational, if any of the subChips inputPins has more than one connection
+			foreach (SimChip subChip in SubChips)
+			{
+				foreach (SimPin inputPin in subChip.InputPins)
+				{
+					if (inputPin.numInputConnections > 1) return false;
+				}
+			}
+			
+			// Can only be combinational if all subchips are combinational
+			foreach (SimChip subChip in SubChips)
+			{
+				// recursively make sure, that subchip is combinational
+				if (!subChip.IsCombinational()) return false;
+			}
+
+			// Check for loops in wiring using topo sort
+			Dictionary<int, List<int>> graph = new();     // chipID -> list of dependent chipIDs
+			Dictionary<int, int> inDegree = new();        // chipID -> number of incoming edges
+			// Build Graph
+			foreach (SimChip chip in SubChips)
+			{
+				int chipID = chip.ID;
+				if (!graph.ContainsKey(chipID)) graph[chipID] = new List<int>();
+				if (!inDegree.ContainsKey(chipID)) inDegree[chipID] = 0;
+
+				foreach (SimPin output in chip.OutputPins)
+				{
+					foreach (SimPin target in output.ConnectedTargetPins)
+					{
+						SimChip targetChip = target.parentChip;
+						if (targetChip == null || targetChip.ID == chipID) continue;
+
+						// Add edge: chip -> targetChip
+						if (!graph[chipID].Contains(targetChip.ID))
+						{
+							graph[chipID].Add(targetChip.ID);
+
+							// Update in-degree for topological sort
+							if (!inDegree.ContainsKey(targetChip.ID)) inDegree[targetChip.ID] = 0;
+
+							inDegree[targetChip.ID]++;
+						}
+					}
+				}
+			}
+			// Run topo sort
+			Queue<int> zeroInDegree = new();
+			foreach (var kvp in inDegree)
+			{
+				if (kvp.Value == 0) zeroInDegree.Enqueue(kvp.Key);
+			}
+			int visitedCount = 0;
+			while (zeroInDegree.Count > 0)
+			{
+				int chipID = zeroInDegree.Dequeue();
+				visitedCount++;
+
+				if (!graph.ContainsKey(chipID)) continue;
+
+				foreach (int neighborID in graph[chipID])
+				{
+					inDegree[neighborID]--;
+					if (inDegree[neighborID] == 0) zeroInDegree.Enqueue(neighborID);
+				}
+			}
+
+			// If we couldn't visit all chips, a cycle exists
+			if (visitedCount != inDegree.Count) return false;
+
+			return true;
+		}
+
+		public int CalculateNumberOfInputBits()
+		{
+			int numberOfBits = 0;
+			foreach (SimPin pin in InputPins)
+			{
+				numberOfBits += (int)pin.numberOfBits;
+			}
+			return numberOfBits;
+		}
+
+		public void ResetReceivedFlagsOnAllPins()
+		{
+			foreach(SimPin pin in InputPins)
+			{
+				pin.numInputsReceivedThisFrame = 0;
+			}
+			foreach (SimPin pin in OutputPins)
+			{
+				pin.numInputsReceivedThisFrame = 0;
+			}
+			foreach (SimChip subChip in SubChips)
+			{
+				subChip.ResetReceivedFlagsOnAllPins();
 			}
 		}
 

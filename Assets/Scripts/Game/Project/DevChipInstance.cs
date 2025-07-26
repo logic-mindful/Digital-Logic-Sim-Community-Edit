@@ -214,6 +214,9 @@ namespace DLS.Game
 			LastSavedDescription = savedDescription;
 
 			RegenerateParentChipNamesHash();
+
+			Simulator.combinationalChipCaches.Remove(savedDescription.Name);
+			Simulator.chipsKnowToNotBeCombinational.Remove(savedDescription.Name);
 		}
 
 		public void AddNewSubChip(SubChipInstance subChip, bool isLoading)

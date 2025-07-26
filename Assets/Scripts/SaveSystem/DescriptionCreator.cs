@@ -37,6 +37,7 @@ namespace DLS.SaveSystem
 				NameLocation = hasSavedDesc ? descOld.NameLocation : NameDisplayLocation.Centre,
 				Size = size,
 				Colour = col,
+				ShouldBeCached = hasSavedDesc ? descOld.ShouldBeCached : false,
 
 				SubChips = subchips,
 				InputPins = inputPins,
