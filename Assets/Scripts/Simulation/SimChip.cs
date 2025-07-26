@@ -99,12 +99,10 @@ namespace DLS.Simulation
 			{
 				case ChipType.Nand:
 				case ChipType.TriStateBuffer:
-				case ChipType.Merge_1To4Bit:
-				case ChipType.Merge_1To8Bit:
-				case ChipType.Merge_4To8Bit:
-				case ChipType.Split_4To1Bit:
-				case ChipType.Split_8To4Bit:
-				case ChipType.Split_8To1Bit:
+        case ChipType.Detector:
+        case ChipType.Merge_Pin:
+				case ChipType.Split_Pin:
+				case ChipType.Constant_8Bit: // Not stateless, but state can't change inside sim.
 					return true;
 				case ChipType.Clock:
 				case ChipType.Pulse:
@@ -116,6 +114,9 @@ namespace DLS.Simulation
 				case ChipType.DisplayLED:
 				case ChipType.Key:
 				case ChipType.Buzzer:
+				case ChipType.EEPROM_256x16:
+				case ChipType.RTC:
+				case ChipType.SPS:
 					return false;
 			}
 
@@ -197,11 +198,24 @@ namespace DLS.Simulation
 			int numberOfBits = 0;
 			foreach (SimPin pin in InputPins)
 			{
-				numberOfBits += (int)pin.numberOfBits;
+				numberOfBits += (int)pin.State.size;
 			}
 			return numberOfBits;
 		}
 
+		public int CalculateBiggestPinWidth()
+		{
+			int biggestPinWidth = 0;
+			foreach(SimPin pin in InputPins)
+			{
+				if(pin.State.size > biggestPinWidth)
+				{
+					biggestPinWidth = pin.State.size;
+				}
+			}
+			return biggestPinWidth;
+		}
+    
 		public void ResetReceivedFlagsOnAllPins()
 		{
 			foreach(SimPin pin in InputPins)

@@ -38,9 +38,7 @@ namespace DLS.Graphics
 		static readonly UIHandle ID_NameDisplayOptions = new("CustomizeMenu_NameDisplayOptions");
 		static readonly UIHandle ID_CachingOptions = new("CustomizeMenu_CachingOptions");
 		static readonly UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
-
     static readonly UIHandle ID_LayoutOptions = new("CustomizeMenu_LayoutOptions");
-    static readonly UI.ScrollViewDrawElementFunc drawDisplayScrollEntry = DrawDisplayScroll;
 		static readonly Func<string, bool> hexStringInputValidator = ValidateHexStringInput;
 		public static bool isCustomLayout;
 		public static bool isDraggingPin;

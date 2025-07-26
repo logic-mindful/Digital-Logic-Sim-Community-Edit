@@ -20,6 +20,10 @@ namespace DLS.Simulation
     }
     public static class Simulator
 	{
+    // Constant for when the chip caching shouldn't happen -- simply because we lack type to store bigger values.
+		// If a chip has a bigger input than that, it will not be cache
+		public const int MAX_INPUT_WIDTH_WHEN_AUTO_CACHING = 16;
+
 		// Constants, for when a chip should be cached. If a chip is purely combinational and has at most AUTO_CACHING number of input bits, it will always be cached.
 		// Otherwise, a user can specifie a chip to be cached, if the chip is combinational and has at most USER_CACHING number of input bits.
 		// If a chip has more than USER_CACHING input bits, it will never be cached. (This is, because memory requirements grow exponentially with number of input bits.)
@@ -229,7 +233,9 @@ namespace DLS.Simulation
 			// Don't cache this chip, if it isn't cachable
 			if (chip.ChipType != ChipType.Custom
 				|| (!chip.shouldBeCached && chip.CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
-				|| !chip.IsCombinational())
+				|| !chip.IsCombinational()
+				|| chip.CalculateBiggestPinWidth() > MAX_INPUT_WIDTH_WHEN_AUTO_CACHING
+				)
 			{
 				chipsKnowToNotBeCombinational.Add(chip.Name);
 				return;
@@ -243,7 +249,7 @@ namespace DLS.Simulation
 			uint[] bufferedInput = new uint[chip.InputPins.Length];
 			for (int i = 0; i < bufferedInput.Length; i++)
 			{
-				bufferedInput[i] = chip.InputPins[i].State;
+				bufferedInput[i] = chip.InputPins[i].State.GetShort();
 			}
 
 			// Cache this chip
@@ -256,9 +262,9 @@ namespace DLS.Simulation
 				int tempInput = input;
 				for (int i = 0; i < chip.InputPins.Length; i++)
 				{
-					uint mask = ((uint)1 << (int)chip.InputPins[i].numberOfBits) - 1;
-					chip.InputPins[i].State = (uint)(tempInput & mask);
-					tempInput >>= (int)chip.InputPins[i].numberOfBits;
+					uint mask = ((uint)1 << chip.InputPins[i].State.size) - 1;
+					chip.InputPins[i].State.SetShort((uint)(tempInput & mask));
+					tempInput >>= (int)chip.InputPins[i].State.size;
 				}
 				StepChip(chip); // Calculate Result
 
@@ -267,7 +273,7 @@ namespace DLS.Simulation
 				uint[] outputs = new uint[numberOfOutputPins];
 				for (int i = 0; i < numberOfOutputPins; i++)
 				{
-					outputs[i] = chip.OutputPins[i].State;
+					outputs[i] = chip.OutputPins[i].State.GetShortValues();
 				}
 				LUT[input] = outputs;
 
@@ -280,7 +286,7 @@ namespace DLS.Simulation
 			chip.ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
 			for (int i = 0; i < bufferedInput.Length; i++)
 			{
-				chip.InputPins[i].State = bufferedInput[i];
+				chip.InputPins[i].State.SetShort(bufferedInput[i]);
 			}
 			StepChip(chip); // make sure the outputs are also correct again
 
@@ -345,15 +351,15 @@ namespace DLS.Simulation
 			int input = 0;
 			for (int i = chip.InputPins.Length - 1; i >= 0; i--)
 			{
-				if (chip.InputPins[i].State >> 16 != 0) return false; // Fails if at least one input is in TriState (as these are not cached)
-				input <<= (int)chip.InputPins[i].numberOfBits;
-				input |= (int)chip.InputPins[i].State;
+				if (chip.InputPins[i].State.GetShort() >> 16 != 0) return false; // Fails if at least one input is in TriState (as these are not cached)
+				input <<= (int)chip.InputPins[i].State.size;
+				input |= (int)chip.InputPins[i].State.GetShort();
 			}
 			uint[][] LUT = combinationalChipCaches[chip.Name];
 			uint[] outputs = LUT[input];
 			for (int i = 0; i < outputs.Length; i++)
 			{
-				chip.OutputPins[i].State = outputs[i];
+				chip.OutputPins[i].State.SetShort(outputs[i]);
 			}
 			return true;
 		}

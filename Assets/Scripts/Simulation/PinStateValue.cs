@@ -134,6 +134,7 @@ namespace DLS.Simulation
             a = valueAndFlags;
         }
 
+
         public void SetMedium(uint value, uint tristateFlags)
         {
             a = value;
@@ -143,6 +144,12 @@ namespace DLS.Simulation
         {
             return a & 0xFFFF;
         }
+
+        public uint GetShort()
+        {
+            return a;
+        }
+
 
         public uint GetMediumValues()
         {
