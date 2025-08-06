@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using DLS.Description;
 using DLS.Game;
+using UnityEngine;
 
 namespace DLS.SaveSystem
 {
@@ -92,6 +93,8 @@ namespace DLS.SaveSystem
 		{
 			string jsonA = CreateSerializedChipDescription(lastSaved);
 			string jsonB = CreateSerializedChipDescription(current);
+			Debug.Log(jsonA);
+			Debug.Log(jsonB);
 			return !UnsavedChangeDetector.IsEquivalentJson(jsonA, jsonB);
 		}
 

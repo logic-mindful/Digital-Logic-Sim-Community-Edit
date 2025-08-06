@@ -987,7 +987,7 @@ namespace DLS.Graphics
 			}
 
             //makes pins red if too close
-            if (ChipCustomizationMenu.isDraggingPin && ChipCustomizationMenu.selectedPin == pin && !ChipCustomizationMenu.isPinPositionValid)
+            if (CustomizationSceneDrawer.isDraggingPin && CustomizationSceneDrawer.selectedPin == pin && !CustomizationSceneDrawer.isPinPositionValid)
             {
                 Vector2 pinPos = pin.GetWorldPos();
                 if (pin.bitCount == PinBitCount.Bit1)

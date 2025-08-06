@@ -4,7 +4,7 @@
   "DLSVersion_EarliestCompatible": "2.0.0",
   "DLSVersion_LastSavedModdedVersion": "1.1.1",
   "CreationTime": "2025-03-14T18:23:30.404+01:00",
-  "LastSaveTime": "2025-06-19T16:58:18.880+02:00",
+  "LastSaveTime": "2025-08-05T23:04:14.047+02:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
@@ -14,9 +14,9 @@
   "Prefs_SimTargetStepsPerSecond": 15,
   "Prefs_SimStepsPerClockTick": 6,
   "Perfs_PinIndicators": 4,
-  "StepsRanSinceCreated": 105863230,
+  "StepsRanSinceCreated": 105864423,
   "TimeSpentSinceCreated": {
-    "StartFrom": "02:50:15.0946759"
+    "StartFrom": "02:51:34.8349194"
   },
   "AllCustomChipNames":[
     "AND",
@@ -68,18 +68,7 @@
     "TEST MergeSplit",
     "#",
     "BuzzTest",
-    "#AA",
-    "StatsTest",
-    "StatsTest1",
-    "StatsTest2",
-    "SPSTest",
-    "EEPROM_test",
-    "BUTTON_test",
-    "BUTTON_test2",
-    "4sw",
-    "ConstTest",
-    "_",
-    "IndicatorTest"
+    "#AA"
   ],
   "StarredList":[
     {

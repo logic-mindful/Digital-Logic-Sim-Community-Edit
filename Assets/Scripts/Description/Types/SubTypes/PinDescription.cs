@@ -27,6 +27,18 @@ namespace DLS.Description
             LocalOffset = localoff;
 			face = 1;
         }
+
+		public PinDescription(string name, int id, Vector2 position, PinBitCount bitCount, PinColour colour, PinValueDisplayMode valueDisplayMode, float localoff, int side)
+		{
+            Name = name;
+            ID = id;
+            Position = position;
+            BitCount = bitCount;
+            Colour = colour;
+            ValueDisplayMode = valueDisplayMode;
+            LocalOffset = localoff;
+			face = side;
+        }
 	}
 
 	public struct PinBitCount
