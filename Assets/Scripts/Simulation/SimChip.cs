@@ -79,8 +79,8 @@ namespace DLS.Simulation
 				for (int i = 0; i < InternalState.Length - 1; i++)
 				{
 					Simulator.rng.NextBytes(randomBytes);
-					InternalState[i] = BitConverter.ToUInt32(randomBytes);
-				}
+					InternalState[i] = BitConverter.ToUInt32(randomBytes) & 0x00FF00FF; // Limit to 8 first bits, otherwise the value is too big
+                }
 			}
 
 			// Load in serialized persistent state (rom data, etc.)
