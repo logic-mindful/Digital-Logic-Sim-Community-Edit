@@ -156,11 +156,11 @@ namespace DLS.Description
 		public List<String> CorrespondingInOut(string name)
 		{
 			List<String> result = new List<String>();
-			result.Add(name);
-			int index = InOutNames().IndexOf(name);
-			int indexNext = index % 2 == 0 ? index + 1 : index - 1;
-			result.Add(InOutNames()[indexNext]);
-			return result;
+			string bitcount = name.Split('-')[1];
+			result.Add("IN-"+bitcount);
+            result.Add("OUT-" + bitcount);
+            result.Add("BUS-" + bitcount);
+            return result;
 		}
 
         public List<String> CorrespondingSplitMerge(string name)
