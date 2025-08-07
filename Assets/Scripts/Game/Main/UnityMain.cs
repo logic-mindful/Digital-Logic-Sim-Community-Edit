@@ -130,8 +130,8 @@ namespace DLS.Game
 					SimPin simPin = Project.ActiveProject.rootSimChip.GetSimPinFromAddress(InteractionState.PinUnderMouse.Address);
 					uint bitData = simPin.State.GetValue();
 					uint tristateFlags = simPin.State.GetTristatedFlags() ;
-					string bitString = StringHelper.CreateBinaryString(bitData, true);
-					string triStateString = StringHelper.CreateBinaryString(tristateFlags, true);
+					string bitString = StringHelper.CreateBinaryString(bitData, false);
+					string triStateString = StringHelper.CreateBinaryString(tristateFlags, false);
 
 					string displayString = "";
 					for (int i = 0; i < bitString.Length; i++)
