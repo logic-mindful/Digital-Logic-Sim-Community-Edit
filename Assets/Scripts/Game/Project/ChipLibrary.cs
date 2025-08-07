@@ -72,8 +72,8 @@ namespace DLS.Game
 
 		public void RemoveChip(string chipName)
 		{
-			allChips.RemoveAll(c => c.NameMatch(chipName));
-			RebuildChipDescriptionLookup();
+            allChips.RemoveAll(c => c.NameMatch(chipName));
+            RebuildChipDescriptionLookup();
 		}
 
 		public void NotifyChipSaved(ChipDescription description, bool hidden = false)

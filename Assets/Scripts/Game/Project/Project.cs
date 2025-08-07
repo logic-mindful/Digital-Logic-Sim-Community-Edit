@@ -22,6 +22,7 @@ namespace DLS.Game
 			Rename,
 			SaveAs
 		}
+
 		public static readonly List<KeyValuePair<PinBitCount,PinBitCount>> SplitMergePairs = new() {
 			new(8,4), new(8,1),
 			new(4,1)
@@ -366,10 +367,25 @@ namespace DLS.Game
 			UpdateAndSaveAffectedChips(chipLibrary.GetChipDescription(chipToDeleteName), null, true);
 
 			// Delete chip save file, remove from library, and update project description
-			Saver.DeleteChip(chipToDeleteName, description.ProjectName);
-			chipLibrary.RemoveChip(chipToDeleteName);
-			SetStarred(chipToDeleteName, false, false, false); // ensure removed from starred list
-			EnsureChipRemovedFromCollections(chipToDeleteName);
+			if (description.isPlayerAddedSpecialChip(chipToDeleteName))
+			{
+				foreach (string name in description.CorrespondingSpecials(chipToDeleteName))
+				{
+					chipLibrary.RemoveChip(name);
+					SetStarred(name, false, false, false); // ensure removed from starred list
+					EnsureChipRemovedFromCollections(name);
+				}
+                description.RemoveSpecial(chipToDeleteName);
+            }
+            else
+			{
+				Saver.DeleteChip(chipToDeleteName, description.ProjectName);
+				chipLibrary.RemoveChip(chipToDeleteName);
+				SetStarred(chipToDeleteName, false, false, false); // ensure removed from starred list
+				EnsureChipRemovedFromCollections(chipToDeleteName);
+
+			}
+
 			UpdateAndSaveProjectDescription();
 
 
