@@ -95,8 +95,6 @@ namespace DLS.SaveSystem
 		{
 			string jsonA = CreateSerializedChipDescription(lastSaved);
 			string jsonB = CreateSerializedChipDescription(current);
-			Debug.Log(jsonA);
-			Debug.Log(jsonB);
 			return !UnsavedChangeDetector.IsEquivalentJson(jsonA, jsonB);
 		}
 
