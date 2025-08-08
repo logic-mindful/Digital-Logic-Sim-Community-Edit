@@ -276,6 +276,8 @@ namespace DLS.Game
 			chipViewStack.Clear();
 			chipViewStack.Push(devChip);
 			viewedChipsString = string.Empty;
+			Simulator.isCreatingACache = false;
+			Simulator.disabledCacheFrame = Simulator.simulationFrame;
 
 			if (devChip.LastSavedDescription != null)
 			{
