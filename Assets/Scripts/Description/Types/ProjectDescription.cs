@@ -1,12 +1,22 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace DLS.Description
 {
     public struct ProjectDescription
-	{
-		public string ProjectName;
+    {
+        public static readonly List<String> BuiltInSpecialChipNames = new List<string>()
+        {
+            "IN-1", "IN-4", "IN-8",
+            "OUT-1", "OUT-4", "OUT-8",
+
+            "1-4BIT", "1-8BIT", "4-8BIT",
+            "4-1BIT", "8-1BIT", "8-4BIT"
+        };
+
+        public string ProjectName;
 		public string DLSVersion_LastSaved;
 		public string DLSVersion_EarliestCompatible;
 		public string DLSVersion_LastSavedModdedVersion;
@@ -63,7 +73,107 @@ namespace DLS.Description
 			}
 			
 		}
-	}
+
+		public List<String> SplitMergeNames()
+		{
+			List<String> result = new List<String>();
+			foreach(KeyValuePair<PinBitCount, PinBitCount> pair in SplitMergePairs)
+			{
+				result.Add(pair.Key.ToString()+"-"+pair.Value.ToString()+"BIT");
+				result.Add(pair.Value.ToString() + "-" + pair.Key.ToString()+"BIT");
+			}
+			return result;
+		}
+
+		public List<String> InOutNames()
+		{
+			List<String > result = new List<String>();
+			foreach(PinBitCount count in pinBitCounts)
+			{
+				result.Add("IN-"+count.ToString());
+                result.Add("OUT-" + count.ToString());
+            }
+			return result;
+        }
+
+		public List<String> AllSpecialNames()
+		{
+			List<String> result = new List<string>(SplitMergeNames());
+			result.AddRange(InOutNames());
+
+			// Add ulterior special types here
+
+			return result;
+		}
+
+		public List<String> AllCustomSpecialNames() {
+			List<String> result = new List<string>();
+			result.AddRange(AllSpecialNames().Where(name => !BuiltInSpecialChipNames.Contains(name)));
+			return result;
+		}
+
+        public bool isPlayerAddedSpecialChip(string name)
+        {
+            return AllCustomSpecialNames().Contains(name);
+        }
+
+		public void RemoveSpecial(string name) {
+			if(InOutNames().Contains(name))
+			{
+				RemoveInOut(name);
+			}
+			if (SplitMergeNames().Contains(name))
+			{
+				RemoveSplitMerge(name);
+			}
+		}
+
+		void RemoveInOut(string name) {
+			int index = InOutNames().IndexOf(name) / 2;
+			pinBitCounts.RemoveAt(index);
+
+		}
+
+		void RemoveSplitMerge(string name) {
+			int index = SplitMergeNames().IndexOf(name) / 2;
+			SplitMergePairs.RemoveAt(index);
+		}
+
+		public List<String> CorrespondingSpecials(string name) {
+			List<String> result = new List<string>();
+			if(InOutNames().Contains(name))
+			{
+				result = CorrespondingInOut(name);
+			}
+			else if (SplitMergeNames().Contains(name))
+			{
+                result = CorrespondingSplitMerge(name);
+			}
+
+			return result;
+		}
+
+		public List<String> CorrespondingInOut(string name)
+		{
+			List<String> result = new List<String>();
+			string bitcount = name.Split('-')[1];
+			result.Add("IN-"+bitcount);
+            result.Add("OUT-" + bitcount);
+            result.Add("BUS-" + bitcount);
+            return result;
+		}
+
+        public List<String> CorrespondingSplitMerge(string name)
+        {
+            List<String> result = new List<String>();
+            result.Add(name);
+            int index = SplitMergeNames().IndexOf(name);
+            int indexNext = index % 2 == 0 ? index + 1 : index - 1;
+            result.Add(SplitMergeNames()[indexNext]);
+            return result;
+        }
+
+    }
 
 
     public struct StarredItem

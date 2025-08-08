@@ -314,7 +314,7 @@ namespace DLS.Game
 		{
 			Color col = IsFullyConnected ? SourcePin.GetStateCol(bitIndex, false, false, true) : DrawSettings.ActiveTheme.StateDisconnectedCol;
 
-			if (bitCount != PinBitCount.Bit1 && bitIndex % 2 == 0 && bitCount <= 64)
+			if (bitCount != PinBitCount.Bit1 && bitIndex % 2 == 0 && bitCount < 64)
 			{
 				Color alternatingWireHighlightDisconnected = Color.white * 0.075f;
 				Color alternatingWireHighlightConnected = Color.white * 0.01f;

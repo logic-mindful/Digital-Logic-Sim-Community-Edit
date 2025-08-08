@@ -61,6 +61,7 @@ namespace DLS.SaveSystem
 		// Delete chip save file, with option to keep backup in a DeletedChips folder.
 		public static void DeleteChip(string chipName, string projectName, bool backupInDeletedFolder = true)
 		{
+
 			string filePath = GetChipFilePath(chipName, projectName);
 			if (backupInDeletedFolder)
 			{
@@ -74,6 +75,7 @@ namespace DLS.SaveSystem
 				File.Delete(filePath);
 			}
 		}
+
 
 		public static void DeleteProject(string projectName, bool backupInDeletedFolder = true)
 		{
@@ -93,8 +95,6 @@ namespace DLS.SaveSystem
 		{
 			string jsonA = CreateSerializedChipDescription(lastSaved);
 			string jsonB = CreateSerializedChipDescription(current);
-			Debug.Log(jsonA);
-			Debug.Log(jsonB);
 			return !UnsavedChangeDetector.IsEquivalentJson(jsonA, jsonB);
 		}
 

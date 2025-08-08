@@ -74,6 +74,7 @@ namespace DLS.Graphics
 
 		static readonly string authorString = "Created by: Sebastian Lague";
 		static readonly string versionString = $"Version: {Main.DLSVersion} ({Main.LastUpdatedString})";
+		static readonly string moddedString = $"ComEdit Version : {Main.DLSVersion_ModdedID} ({Main.LastUpdatedModdedString})";
 		static string SelectedProjectName => allProjectDescriptions[selectedProjectIndex].ProjectName;
 
 		static string FormatButtonString(string s) => capitalize ? s.ToUpper() : s;
@@ -475,14 +476,19 @@ namespace DLS.Graphics
 
 			float pad = 1;
 			Color col = new(1, 1, 1, 0.5f);
+			Color modColor = new(0.98f, 0.76f, 0.26f);
 
-			Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad;
+            Vector2 versionPos = UI.PrevBounds.CentreLeft + Vector2.right * pad;
 			Vector2 datePos = UI.PrevBounds.CentreRight + Vector2.left * pad;
+			Vector2 moddedPos = UI.PrevBounds.Centre;
+
 			UI.DrawText(authorString, theme.FontRegular, theme.FontSizeRegular, versionPos, Anchor.TextCentreLeft, col);
 			UI.DrawText(versionString, theme.FontRegular, theme.FontSizeRegular, datePos, Anchor.TextCentreRight, col);
-		}
+            UI.DrawText(moddedString, theme.FontRegular, theme.FontSizeRegular, moddedPos, Anchor.TextCentre, modColor);
 
-		static string ResolutionToString(Vector2Int r) => $"{r.x} x {r.y}";
+        }
+
+        static string ResolutionToString(Vector2Int r) => $"{r.x} x {r.y}";
 
 		static void Quit()
 		{
