@@ -84,7 +84,12 @@ namespace DLS.Graphics
 					UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
 			}
 
-			return;
+            if (KeyboardShortcuts.CancelShortcutTriggered)
+            {
+                UIDrawer.SetActiveMenu(UIDrawer.MenuType.None);
+            }
+
+            return;
 
 			void AddSpacing()
 			{
