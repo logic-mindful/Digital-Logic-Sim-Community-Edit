@@ -14,9 +14,9 @@ namespace DLS.Game
 	{
 		public static readonly Version DLSVersion = new(2, 1, 6);
 		public static readonly Version DLSVersion_EarliestCompatible = new(2, 0, 0);
-		public static readonly Version DLSVersion_ModdedID = new(1, 2, 0);
+		public static readonly Version DLSVersion_ModdedID = new(1, 1, 2);
 		public const string LastUpdatedString = "5 May 2025";
-		public const string LastUpdatedModdedString = "Set at release";
+		public const string LastUpdatedModdedString = "9 August 2025";
 		public static AppSettings ActiveAppSettings;
 
 		public static Project ActiveProject { get; private set; }
