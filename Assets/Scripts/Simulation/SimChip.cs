@@ -7,6 +7,15 @@ namespace DLS.Simulation
 {
 	public class SimChip
 	{
+		// Constant for when the chip caching shouldn't happen -- simply because we lack type to store bigger values.
+		// If a chip has a bigger pin than this, it will not be cached.
+		public const int MAX_PIN_WIDTH_WHEN_CACHING = 16;
+
+		// Constants, for when a chip should be cached. If a chip is purely combinational and has at most AUTO_CACHING number of input bits, it will always be cached.
+		// Otherwise, a user can specifie a chip to be cached, if the chip is combinational and has at most USER_CACHING number of input bits.
+		// If a chip has more than USER_CACHING input bits, it will never be cached. (This is, because memory requirements grow exponentially with number of input bits.)
+		public const int MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING = 12;
+		public const int MAX_NUM_INPUT_BITS_WHEN_USER_CACHING = 24;
 		public readonly ChipType ChipType;
 		public readonly int ID;
 		public readonly string Name;
@@ -22,8 +31,15 @@ namespace DLS.Simulation
 		public int numInputsReady;
 		public SimPin[] OutputPins = Array.Empty<SimPin>();
 		public SimChip[] SubChips = Array.Empty<SimChip>();
+		// Small, purely combinational chips use a LUT for fast calculations. These are stored here. Maps the name of a chip to its LUT.
+		public static readonly Dictionary<string, (int framCacheWasMade, uint[][] LUT)> combinationalChipCaches = new();
 		public uint[][] LUT = null;
-
+		// Variables for the creating cache info popup.
+		public static bool isCreatingACache = false;
+		public static string nameOfChipWhoseCacheIsBeingCreated;
+		public static float cacheCreatingProgress;
+		// If this is set to the current frame, all cache attempts will abort until the next frame.
+		public static int disabledCacheFrame = -1;
 
 		public SimChip()
 		{
@@ -99,13 +115,13 @@ namespace DLS.Simulation
 				return false;
 			// Chips with more input pins than this constant only cache if the
 			// user requests that they do.
-			if(CalculateNumberOfInputBits() > Simulator.MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
+			if(CalculateNumberOfInputBits() > MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
 				if(!shouldBeCached)
 					return false;
 			// Cached inputs and outputs are int32 types, and half the bits are
 			// used for the tri-state flag for each pin, therefore if any pin
 			// is wider than 16 bits, the cached results will be innacurate.
-			if(CalculateBiggestPinWidth() > Simulator.MAX_INPUT_WIDTH_WHEN_AUTO_CACHING)
+			if(CalculateBiggestPinWidth() > MAX_PIN_WIDTH_WHEN_CACHING)
 				return false;
 			
 			return IsCombinational();
@@ -171,8 +187,10 @@ namespace DLS.Simulation
 					foreach (SimPin target in output.ConnectedTargetPins)
 					{
 						SimChip targetChip = target.parentChip;
-						if (targetChip == null || targetChip.ID == chipID) continue;
-
+						if (targetChip == null) continue;
+						// A subchip connects to itself, obviously creating a loop.
+						if(targetChip.ID == chipID)
+							return false;
 						// Add edge: chip -> targetChip
 						if (!graph[chipID].Contains(targetChip.ID))
 						{
@@ -255,60 +273,74 @@ namespace DLS.Simulation
 				subChip.ResetReceivedFlagsOnThisChipsPins();
 			}
 		}
+
+		public void ResetReceivedFlagsOnAllPins()
+		{
+			ResetReceivedFlagsOnThisChipsPins();
+			foreach (SimChip subChip in SubChips)
+			{
+				subChip.ResetReceivedFlagsOnAllPins();
+			}
+		}
+		
+		public static void AbortCache()
+		{
+			disabledCacheFrame = Simulator.simulationFrame;
+		}
 		// Returns true if it needed to fully recalculate the lookup table, which
 		// should indicate to parent chips that they need to recalculate theirs as well.
-		public bool CalculateLUT()
+		public int CalculateLUT()
 		{
-			bool Abort()
+			bool ShouldAbort()
 			{
-				// Stop calculating this frame, we're opening a new chip.
-				return Simulator.disabledCacheFrame == Simulator.simulationFrame;
+				// Stop calculating this frame.
+				return disabledCacheFrame == Simulator.simulationFrame;
 			}
 
-			if(Abort())
-				return false;
+			if(ShouldAbort())
+				return -1;
 
-			bool childRecalculated = false;
+			int newestChild = -1;
 			foreach (SimChip chip in SubChips)
 			{
-				childRecalculated |= chip.CalculateLUT();
+				newestChild = Math.Max(chip.CalculateLUT(), newestChild);
 			}
-			// We already recalculated this frame due to a child.
-			if(childRecalculated && Simulator.simulationFrame == Simulator.chipLastCacheFrame.GetValueOrDefault(Name, -1))
-				childRecalculated = false;
-
-			if(!childRecalculated)
+			
+			if(combinationalChipCaches.ContainsKey(Name))
 			{
-				if(Simulator.combinationalChipCaches.ContainsKey(Name))
-					LUT = Simulator.combinationalChipCaches[Name];
-				else if(Simulator.chipsKnowToNotBeCombinational.Contains(Name))
-					LUT = Array.Empty<uint[]>();
-				// If we recalculated on this frame (but not this specific method
-				// call), our parents still need to recalculate.
-				if(LUT != null)
-					return Simulator.simulationFrame == Simulator.chipLastCacheFrame[Name];
+				(int frameCacheWasMade, uint[][] LUT) = combinationalChipCaches[Name];
+				if(frameCacheWasMade >= newestChild)
+				{	
+					// LUT being null in the main dictionary means the chip
+					// could not be cached. LUT being null in this chip instance
+					// however means that caching hasn't been attempted, so
+					// instead an empty array indicates the chip could not be
+					// cached.
+					if(LUT == null)
+						this.LUT = Array.Empty<uint[]>();
+					else
+						this.LUT = LUT;
+					return frameCacheWasMade;
+				}
 			}
-			// Else one of our descendants has been modified, our current cache
-			// is invalid and must be fully recalculated.
-
+			// Either we haven't been cached yet, or one of our descendants has
+			// since the last time we did, so we need to recache.
+			int currentFrame = Simulator.simulationFrame;
 			if(!CanCache())
 			{
 				LUT = Array.Empty<uint[]>();
-				Simulator.chipsKnowToNotBeCombinational.Add(Name);
-				Simulator.chipLastCacheFrame[Name] = Simulator.simulationFrame;
-				return true;
+				combinationalChipCaches[Name] = (currentFrame, null);
+				return currentFrame;
 			}
 
-			Simulator.nameOfChipWhoseCacheIsBeingCreated = Name;
-			Simulator.cacheCreatingProgress = 0;
-			Simulator.isCreatingACache = true;
-
-			if(Abort())
+			if(ShouldAbort())
 			{
-				Simulator.isCreatingACache = false;
-				return false;
+				return -1;
 			}
 
+			nameOfChipWhoseCacheIsBeingCreated = Name;
+			cacheCreatingProgress = 0;
+			isCreatingACache = true;
 			// Buffer current Input
 			uint[] bufferedInput = new uint[InputPins.Length];
 			for (int i = 0; i < bufferedInput.Length; i++)
@@ -342,23 +374,23 @@ namespace DLS.Simulation
 						outputs[i] = OutputPins[i].State.GetShort();
 					}
 					LUT[input] = outputs;
-
-					Simulator.cacheCreatingProgress = (float)input / numberOfPossibleInputs;
-					if (!Simulator.isCreatingACache) return false; // Cancel the caching, if something ordered the caching to be stopped
+					cacheCreatingProgress = (float)input / numberOfPossibleInputs;
+					// Cancel the caching, if something ordered the caching to be stopped
+					if(ShouldAbort())
+						return -1;
 				}
-				Simulator.combinationalChipCaches[Name] = LUT;
+				combinationalChipCaches[Name] = (currentFrame, LUT);
 				this.LUT = LUT;
-				Simulator.chipLastCacheFrame[Name] = Simulator.simulationFrame;
-				Simulator.isCreatingACache = false;
-				return true;
+				return currentFrame;
 			}finally
 			{
 				// Reload buffered Input
-				ResetReceivedFlagsOnThisChipsPins(); // Make sure the chip only recieves our new input
+				ResetReceivedFlagsOnAllPins(); // Make sure the chip only recieves our new input
 				for (int i = 0; i < bufferedInput.Length; i++)
 				{
 					InputPins[i].State.SetShort(bufferedInput[i]);
 				}
+				isCreatingACache = false;
 			}
 		}
 
@@ -378,7 +410,9 @@ namespace DLS.Simulation
 			int input = 0;
 			for (int i = InputPins.Length - 1; i >= 0; i--)
 			{
-				if (InputPins[i].State.GetShort() >> 16 != 0) return false; // Fails if at least one input is in TriState (as these are not cached)
+				// Fails if at least one input is in TriState (as these are not cached)
+				if(InputPins[i].State.GetShort() >> 16 != 0)
+					return false;
 				input <<= (int)InputPins[i].State.size;
 				input |= (int)InputPins[i].State.GetShort();
 			}

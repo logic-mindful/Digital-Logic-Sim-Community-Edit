@@ -130,11 +130,11 @@ namespace DLS.Graphics
 			if (chip.IsCombinational())
 			{
 				int numberOfInputBits = chip.CalculateNumberOfInputBits();
-				if (numberOfInputBits <= Simulator.MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
+				if (numberOfInputBits <= SimChip.MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING)
 				{
 					UI.DrawText("This chip is being cached.", UIThemeLibrary.DefaultFont, UIThemeLibrary.FontSizeSmall, NextPos(), Anchor.TopLeft, Color.white);
 				}
-				else if (numberOfInputBits <= Simulator.MAX_NUM_INPUT_BITS_WHEN_USER_CACHING)
+				else if (numberOfInputBits <= SimChip.MAX_NUM_INPUT_BITS_WHEN_USER_CACHING)
 				{
 					int shouldBeCachedNum = UI.WheelSelector(ID_CachingOptions, cachingOptions, NextPos(), new Vector2(pw, DrawSettings.ButtonHeight), theme.OptionsWheel, Anchor.TopLeft);
 					bool shouldBeCached = false;

@@ -28,8 +28,7 @@ namespace DLS.SaveSystem
 			if (projectDescription.TimeSpentSinceCreated == null) projectDescription.TimeSpentSinceCreated = new();
 			ChipLibrary chipLibrary = LoadChipLibrary(projectDescription);
 
-			Simulator.combinationalChipCaches.Clear();
-			Simulator.chipsKnowToNotBeCombinational.Clear();
+			SimChip.combinationalChipCaches.Clear();
 
 			return new Project(projectDescription, chipLibrary);
 		}

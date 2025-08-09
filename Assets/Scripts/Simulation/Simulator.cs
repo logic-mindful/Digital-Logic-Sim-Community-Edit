@@ -19,28 +19,8 @@ namespace DLS.Simulation
     }
     public static class Simulator
 	{
-    // Constant for when the chip caching shouldn't happen -- simply because we lack type to store bigger values.
-		// If a chip has a bigger input than that, it will not be cache
-		public const int MAX_INPUT_WIDTH_WHEN_AUTO_CACHING = 16;
-
-		// Constants, for when a chip should be cached. If a chip is purely combinational and has at most AUTO_CACHING number of input bits, it will always be cached.
-		// Otherwise, a user can specifie a chip to be cached, if the chip is combinational and has at most USER_CACHING number of input bits.
-		// If a chip has more than USER_CACHING input bits, it will never be cached. (This is, because memory requirements grow exponentially with number of input bits.)
-		public const int MAX_NUM_INPUT_BITS_WHEN_AUTO_CACHING = 12;
-		public const int MAX_NUM_INPUT_BITS_WHEN_USER_CACHING = 24;
-
-		// Small, purely combinational chips use a LUT for fast calculations. These are stored here. Maps the name of a chip to its LUT.
-		public static readonly Dictionary<string, uint[][]> combinationalChipCaches = new();
-		public static readonly Dictionary<string, int> chipLastCacheFrame = new();
-		public static readonly HashSet<string> chipsKnowToNotBeCombinational = new();
+		// Used to temporarily pause cache use when a chip is viewed or certain interfaces are open.
 		public static bool useCaching = true;
-
-		// Variables for the creating cache info popup
-		public static bool isCreatingACache = false;
-		public static int disabledCacheFrame = -1;
-		public static string nameOfChipWhoseCacheIsBeingCreated;
-		public static float cacheCreatingProgress;
-
 		public static readonly Random rng = new();
 		static readonly Stopwatch stopwatch = Stopwatch.StartNew();
 		public static int stepsPerClockTransition;
@@ -143,7 +123,7 @@ namespace DLS.Simulation
 		// Recursively propagate signals through this chip and its subchips
 		public static void StepChip(SimChip chip)
 		{
-			if(isCreatingACache)
+			if(SimChip.isCreatingACache)
 				chip.ResetReceivedFlagsOnChildrensPins();
 			// Propagate signal from all input dev-pins to all their connected pins
 			chip.Sim_PropagateInputs();
@@ -157,7 +137,7 @@ namespace DLS.Simulation
 				// Here two chips may be swapped if they are not 'ready' (i.e. all inputs have not yet been received for this
 				// frame; indicating that the input relies on the output). The purpose of this reordering is to allow some variety in
 				// the outcomes of race-conditions (such as an SR latch having both inputs enabled, and then released).
-				if (!isCreatingACache && canDynamicReorderThisFrame && i > 0 && !nextSubChip.Sim_IsReady() && RandomBool())
+				if (!SimChip.isCreatingACache && canDynamicReorderThisFrame && i > 0 && !nextSubChip.Sim_IsReady() && RandomBool())
 				{
 					SimChip potentialSwapChip = chip.SubChips[i - 1];
 					if (!ChipTypeHelper.IsBusOriginType(potentialSwapChip.ChipType))

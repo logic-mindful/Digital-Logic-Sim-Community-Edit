@@ -86,11 +86,12 @@ namespace DLS.Graphics
 				bool showSimPausedBanner = project.simPaused;
 				if (showSimPausedBanner) SimPausedUI.DrawPausedBanner();
 				if (project.chipViewStack.Count > 1) ViewedChipsBar.DrawViewedChipsBanner(project, showSimPausedBanner);
-				if (Simulator.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
+				if (SimChip.isCreatingACache) CreateCacheUI.DrawCreatingCacheInfo();
 				aMenuIsOpen = false;
 			}
-
-			if (aMenuIsOpen) Simulator.isCreatingACache = false; // Cancel current caching process when a menu gets opened
+			// Cancel current caching process when a menu gets opened
+			if(aMenuIsOpen)
+				SimChip.AbortCache();
 
 			ContextMenu.Update();
 		}
