@@ -123,7 +123,7 @@ namespace DLS.Game
 
 		void EditorDebugUpdate()
 		{
-			if (InputHelper.AltIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.Return))
+			if (InputHelper.AltIsHeld && InputHelper.IsKeyDownThisFrame(KeyCode.P))
 			{
 				if (InteractionState.PinUnderMouse != null)
 				{

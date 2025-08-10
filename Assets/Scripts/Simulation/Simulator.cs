@@ -290,7 +290,7 @@ namespace DLS.Simulation
                         }
                         else if ((inputState >> 1) != 0)
                         {
-                            outputState = 2;
+                            outputState = 0b_0000_0000_0000_0001___0000_0000_0000_0000;
                         }
 
                         chip.OutputPins[0].State.a = outputState;
