@@ -22,6 +22,7 @@ namespace DLS.Game
 			Rename,
 			SaveAs
 		}
+
 		public static readonly List<KeyValuePair<PinBitCount,PinBitCount>> SplitMergePairs = new() {
 			new(8,4), new(8,1),
 			new(4,1)
@@ -127,6 +128,9 @@ namespace DLS.Game
 		{
 			if (chipLibrary.TryGetChipDescription(subchip.Description.Name, out ChipDescription description))
 			{
+				Simulator.useCaching = false; // Disable caching while viewing so subchips actually show what they are doing
+				SimChip.AbortCache(); // Cancel any cache creation that might be going on
+
 				SimChip simChipToView = ViewedChip.SimChip.GetSubChipFromID(subchip.ID);
 
 				DevChipInstance viewChip = DevChipInstance.LoadFromDescriptionTest(description, chipLibrary).devChip;
@@ -145,6 +149,8 @@ namespace DLS.Game
 				chipViewStack.Pop();
 				controller.CancelEverything();
 				UpdateViewedChipsString();
+
+				if (chipViewStack.Count == 1) Simulator.useCaching = true; // Left View mode, so turn caching back on
 			}
 		}
 
@@ -271,6 +277,7 @@ namespace DLS.Game
 			chipViewStack.Clear();
 			chipViewStack.Push(devChip);
 			viewedChipsString = string.Empty;
+			SimChip.AbortCache();
 
 			if (devChip.LastSavedDescription != null)
 			{
@@ -361,10 +368,25 @@ namespace DLS.Game
 			UpdateAndSaveAffectedChips(chipLibrary.GetChipDescription(chipToDeleteName), null, true);
 
 			// Delete chip save file, remove from library, and update project description
-			Saver.DeleteChip(chipToDeleteName, description.ProjectName);
-			chipLibrary.RemoveChip(chipToDeleteName);
-			SetStarred(chipToDeleteName, false, false, false); // ensure removed from starred list
-			EnsureChipRemovedFromCollections(chipToDeleteName);
+			if (description.isPlayerAddedSpecialChip(chipToDeleteName))
+			{
+				foreach (string name in description.CorrespondingSpecials(chipToDeleteName))
+				{
+					chipLibrary.RemoveChip(name);
+					SetStarred(name, false, false, false); // ensure removed from starred list
+					EnsureChipRemovedFromCollections(name);
+				}
+                description.RemoveSpecial(chipToDeleteName);
+            }
+            else
+			{
+				Saver.DeleteChip(chipToDeleteName, description.ProjectName);
+				chipLibrary.RemoveChip(chipToDeleteName);
+				SetStarred(chipToDeleteName, false, false, false); // ensure removed from starred list
+				EnsureChipRemovedFromCollections(chipToDeleteName);
+
+			}
+
 			UpdateAndSaveProjectDescription();
 
 

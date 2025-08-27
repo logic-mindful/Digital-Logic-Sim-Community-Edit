@@ -486,6 +486,7 @@ namespace DLS.Graphics
 						{
 							if (isConfirmingChipDeletion)
 							{
+
 								if (selectedCollectionIndex != -1) // deleting from collection
 								{
 									ChipCollection collection = collections[selectedCollectionIndex];
@@ -531,9 +532,10 @@ namespace DLS.Graphics
 			static void ChipActionButtons(string selectedChipName, ref Vector2 topLeft, float width)
 			{
 				bool isBuiltin = project.chipLibrary.IsBuiltinChip(selectedChipName);
+				bool isSpecialCustom = project.description.isPlayerAddedSpecialChip(selectedChipName); 
 				interactable_chipActionButtons[0] = project.ViewedChip.CanAddSubchip(selectedChipName);
 				interactable_chipActionButtons[1] = !isBuiltin;
-				interactable_chipActionButtons[2] = !isBuiltin;
+				interactable_chipActionButtons[2] = !(isBuiltin && !isSpecialCustom);
 				int chipActionIndex = DrawHorizontalButtonGroup(buttonNames_chipAction, interactable_chipActionButtons, ref topLeft, width);
 
 				if (chipActionIndex == 0) // use

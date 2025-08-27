@@ -195,11 +195,11 @@ namespace DLS.Graphics
 			string text = pin.Name;
 			if (string.IsNullOrWhiteSpace(text)) return;
 
-			const float offsetX = PinRadius + 0.05f;
+			Vector2 offset = (PinRadius + 0.05f) * pin.FacingDir;
 			FontType font = FontBold;
 
 			Vector2 size = Draw.CalculateTextBoundsSize(text, FontSizePinLabel, font) + LabelBackgroundPadding;
-			Vector2 centre = pin.GetWorldPos() + pin.FacingDir * (size.x / 2 + offsetX);
+			Vector2 centre = pin.GetWorldPos() + pin.FacingDir * size/2 + offset;
 
 			Draw.Quad(centre, size, ActiveTheme.PinLabelCol);
 			Draw.Text(font, text, FontSizePinLabel, centre, Anchor.TextFirstLineCentre, Color.white);
@@ -987,7 +987,7 @@ namespace DLS.Graphics
 			}
 
             //makes pins red if too close
-            if (ChipCustomizationMenu.isDraggingPin && ChipCustomizationMenu.selectedPin == pin && !ChipCustomizationMenu.isPinPositionValid)
+            if (CustomizationSceneDrawer.isDraggingPin && CustomizationSceneDrawer.selectedPin == pin && !CustomizationSceneDrawer.isPinPositionValid)
             {
                 Vector2 pinPos = pin.GetWorldPos();
                 if (pin.bitCount == PinBitCount.Bit1)

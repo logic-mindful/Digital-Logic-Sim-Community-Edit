@@ -1,8 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
-using UnityEngine;
 using DLS.Description;
 using DLS.Game;
 using NUnit.Framework.Interfaces;
@@ -19,6 +19,8 @@ namespace DLS.Simulation
     }
     public static class Simulator
 	{
+		// Used to temporarily pause cache use when a chip is viewed or certain interfaces are open.
+		public static bool useCaching = true;
 		public static readonly Random rng = new();
 		static readonly Stopwatch stopwatch = Stopwatch.StartNew();
 		public static int stepsPerClockTransition;
@@ -84,7 +86,7 @@ namespace DLS.Simulation
 					// Possible for sim to be temporarily out of sync since running on separate threads, so just ignore failure to find pin.
 				}
 			}
-
+			
 			// Process
 			if (needsOrderPass)
 			{
@@ -119,8 +121,10 @@ namespace DLS.Simulation
 		}
 
 		// Recursively propagate signals through this chip and its subchips
-		static void StepChip(SimChip chip)
+		public static void StepChip(SimChip chip)
 		{
+			if(SimChip.isCreatingACache)
+				chip.ResetReceivedFlagsOnChildrensPins();
 			// Propagate signal from all input dev-pins to all their connected pins
 			chip.Sim_PropagateInputs();
 
@@ -133,7 +137,7 @@ namespace DLS.Simulation
 				// Here two chips may be swapped if they are not 'ready' (i.e. all inputs have not yet been received for this
 				// frame; indicating that the input relies on the output). The purpose of this reordering is to allow some variety in
 				// the outcomes of race-conditions (such as an SR latch having both inputs enabled, and then released).
-				if (canDynamicReorderThisFrame && i > 0 && !nextSubChip.Sim_IsReady() && RandomBool())
+				if (!SimChip.isCreatingACache && canDynamicReorderThisFrame && i > 0 && !nextSubChip.Sim_IsReady() && RandomBool())
 				{
 					SimChip potentialSwapChip = chip.SubChips[i - 1];
 					if (!ChipTypeHelper.IsBusOriginType(potentialSwapChip.ChipType))
@@ -143,8 +147,14 @@ namespace DLS.Simulation
 					}
 				}
 
-				if (nextSubChip.IsBuiltin) ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly
-				else StepChip(nextSubChip); // Recursively process custom chip
+				if (nextSubChip.IsBuiltin)
+				{
+					ProcessBuiltinChip(nextSubChip); // We've reached a built-in chip, so process it directly
+				}
+				else if (!(useCaching && nextSubChip.TryProcessingFromCache()))
+				{
+					StepChip(nextSubChip); // Recursively process custom chip
+				}
 
 				// Step 3) Forward the outputs of the processed subchip to connected pins
 				nextSubChip.Sim_PropagateOutputs();
@@ -280,7 +290,7 @@ namespace DLS.Simulation
                         }
                         else if ((inputState >> 1) != 0)
                         {
-                            outputState = 2;
+                            outputState = 0b_0000_0000_0000_0001___0000_0000_0000_0000;
                         }
 
                         chip.OutputPins[0].State.a = outputState;

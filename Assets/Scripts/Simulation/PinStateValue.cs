@@ -134,6 +134,7 @@ namespace DLS.Simulation
             a = valueAndFlags;
         }
 
+
         public void SetMedium(uint value, uint tristateFlags)
         {
             a = value;
@@ -143,6 +144,12 @@ namespace DLS.Simulation
         {
             return a & 0xFFFF;
         }
+
+        public uint GetShort()
+        {
+            return a;
+        }
+
 
         public uint GetMediumValues()
         {
@@ -161,7 +168,6 @@ namespace DLS.Simulation
         
         public uint GetValue()
         {
-            if(size == 1) { return (uint)(SmallHigh() ? 1 : 0); }
             if(size <=16) { return GetShortValues(); }
             if(size <=32) { return GetMediumValues(); }
             return BitArrayHelper.GetFirstUIntFromByteArray(BigValues);
@@ -210,7 +216,6 @@ namespace DLS.Simulation
 
         public uint GetTristatedFlags()
         {
-            if (size == 1) { return (uint)(a >> 1); }
             if (size <=16) { return a & 0xFFFF0000; }
             if (size <= 32) { return (uint)b.Data; }
             return BitArrayHelper.GetFirstUIntFromByteArray(BigTristates);

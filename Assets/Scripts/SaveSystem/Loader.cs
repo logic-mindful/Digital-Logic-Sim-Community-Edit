@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using DLS.Description;
 using DLS.Game;
+using DLS.Simulation;
 
 namespace DLS.SaveSystem
 {
@@ -26,6 +27,9 @@ namespace DLS.SaveSystem
 			ProjectDescription projectDescription = LoadProjectDescription(projectName);
 			if (projectDescription.TimeSpentSinceCreated == null) projectDescription.TimeSpentSinceCreated = new();
 			ChipLibrary chipLibrary = LoadChipLibrary(projectDescription);
+
+			SimChip.combinationalChipCaches.Clear();
+
 			return new Project(projectDescription, chipLibrary);
 		}
 

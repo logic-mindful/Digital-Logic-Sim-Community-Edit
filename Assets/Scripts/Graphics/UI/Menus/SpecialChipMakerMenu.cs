@@ -304,6 +304,7 @@ namespace DLS.Graphics
             if (!PinBitCountsMade.Contains(a) && !PinBitCountsMade.Contains(b) ) { return (false, $"No pins with pinsize {a} and {b} exist. Create them first."); }
             if (!PinBitCountsMade.Contains(a) ) { return (false, $"No pin with pinsize {a} exist. Create it first, if valid."); }
             if (!PinBitCountsMade.Contains(b) ) { return (false, $"No pin with pinsize {b} exist. Create it first, if valid."); }
+            if (a == b) { return (false, "This seems useless..."); }
             int bigger = Math.Max(a, b);
             int smaller = Math.Min(a, b);
             if(bigger%smaller != 0) { return (false, $"{bigger} / {smaller} isn't an integer."); }
