@@ -24,6 +24,7 @@ namespace DLS.Description
 
 			// ---- Displays -----
 			{ ChipType.DisplayRGB, "RGB DISPLAY" },
+			{ ChipType.DisplayRGBTouch, "TOUCHSCREEN RGB DISPLAY" },
 			{ ChipType.DisplayDot, "DOT DISPLAY" },
 			{ ChipType.SevenSegmentDisplay, "7-SEGMENT" },
 			{ ChipType.DisplayLED, "LED" },
@@ -86,7 +87,7 @@ namespace DLS.Description
 		public static bool IsClickableDisplayType(ChipType type) {
 			// Return true for any chiptype that is a clickable display 
 
-			return type == ChipType.Button || type == ChipType.Toggle;
+			return type == ChipType.Button || type == ChipType.Toggle || type == ChipType.DisplayRGBTouch;
 		}
 
 		public static bool IsInternalDataModifiable(ChipType type) {

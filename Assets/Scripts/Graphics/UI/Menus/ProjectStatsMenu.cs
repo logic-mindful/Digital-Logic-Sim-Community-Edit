@@ -29,6 +29,9 @@ namespace DLS.Graphics
 		static readonly string chipsUsedLabel = "Chips used";
 		static readonly string chipsUsedTotalLabel = "Total chips used";
 
+		static uint chipsUsed;
+		static int totalChipsUsed;
+
 		public static void DrawMenu()
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
@@ -66,12 +69,12 @@ namespace DLS.Graphics
 
 				Vector2 chipsUsedLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsUsedLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(chipsUsedLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetChipsUsed().ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				UI.DrawText(chipsUsed.ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 chipsUsedTotalLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, chipsUsedTotalLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(chipsUsedTotalLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetTotalChipsUsed().ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedTotalLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				UI.DrawText(totalChipsUsed.ToString(), theme.FontBold, theme.FontSizeRegular, chipsUsedTotalLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
 				Vector2 buttonTopLeft = new(50, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));
@@ -95,9 +98,16 @@ namespace DLS.Graphics
 			}
 
 		}
-		static int GetTotalChipsUsed() {
+		public static void OnMenuOpened()
+		{
+			chipsUsed = GetChipsUsed();
+			totalChipsUsed = GetTotalChipsUsed();
+		}
+		static int GetTotalChipsUsed()
+		{
 			int uses = 0;
-			foreach (ChipDescription chip in Project.ActiveProject.chipLibrary.allChips) {
+			foreach (ChipDescription chip in Project.ActiveProject.chipLibrary.allChips)
+			{
 				Dictionary<ChipDescription, int> usesByChip = new();
 				foreach (ChipDescription chipchip in Project.ActiveProject.chipLibrary.allChips)
 				{

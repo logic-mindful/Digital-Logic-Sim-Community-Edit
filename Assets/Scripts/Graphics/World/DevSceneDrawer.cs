@@ -629,41 +629,104 @@ namespace DLS.Graphics
 				(bounds, inBounds, clicked) = DrawInteractable_Toggle(posWorld, scaleWorld, sim);
 			}
 
-			if (inBounds)
+			else if (display.DisplayType == ChipType.DisplayRGBTouch)
 			{
-				InteractionState.NotifyElementUnderMouse(display);
+				(bounds, inBounds, clicked) = DrawInteractable_RGBTouch(posWorld, scaleWorld, sim);
 			}
+
+			if (inBounds)
+				{
+					InteractionState.NotifyElementUnderMouse(display);
+				}
 
 			rootChip.IsSelected = clicked ? false : rootChip.IsSelected;
 
 			display.LastDrawBounds = bounds;
 			return bounds;
         }
+		
+		public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_RGBTouch(Vector2 centre, float scale, SimChip simSource)
+		{
+			Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
+			bool pressed = false;
+			bool inBounds = false;
+			const int pixelsPerRow = 16;
+			const float borderFrac = 0.95f;
+			const float pixelSizeT = 0.925f;
+			// Draw background
+			Draw.Quad(centre, Vector2.one * scale, Color.black);
+			float size = scale * borderFrac;
+
+			bool useSim = simSource != null;
+
+			Vector2 bottomLeft = centre - Vector2.one * size / 2;
+			float pixelSize = size / pixelsPerRow;
+			Vector2 pixelDrawSize = Vector2.one * (pixelSize * pixelSizeT);
+			Color col = ColHelper.MakeCol(0.1f);
+			uint? addr = null;
+
+			for (int y = 0; y < 16; y++)
+			{
+				for (int x = 0; x < 16; x++)
+				{
+					int address = y * 16 + x;
+					if (useSim)
+					{
+						uint pixelState = simSource.InternalState[address];
+						float red = Unpack4BitColChannel(pixelState);
+						float green = Unpack4BitColChannel(pixelState >> 4);
+						float blue = Unpack4BitColChannel(pixelState >> 8);
+						col = new Color(red, green, blue);
+					}
+
+					Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
+					Draw.Quad(pos, pixelDrawSize, col);
+					Bounds2D pixelBounds = Bounds2D.CreateFromCentreAndSize(pos, pixelDrawSize * 1.08f); // slightly larger bounds for easier clicking
+
+					if (simSource != null)
+					{
+						if (pixelBounds.PointInBounds(InputHelper.MousePosWorld)) inBounds = true;
+						if (inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton) pressed = true;
+						if (addr == null) addr = pressed ? (uint)address : null;
+						simSource.OutputPins[4].State.SmallSet(pressed ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
+					}
+				}
+			}
+
+			if (simSource != null) simSource.OutputPins[3].State.SmallSet(addr == null ? 0 : addr.Value);
+
+			return (bounds, inBounds, pressed);
+
+			float Unpack4BitColChannel(uint raw)
+			{
+				return (raw & 0b1111) / 15f;
+			}
+		}
 
         public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Button(Vector2 centre, float scale, SimChip chipSource)
-        {
-            Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
+		{
+			Bounds2D bounds = Bounds2D.CreateFromCentreAndSize(centre, Vector2.one * scale);
 			bool inBounds = false;
-            bool pressed = false;
+			bool pressed = false;
 
-            const float buttonSize = 0.875f;
-            Color col = ActiveTheme.StateDisconnectedCol;
+			const float buttonSize = 0.875f;
+			Color col = ActiveTheme.StateDisconnectedCol;
 
-            if (chipSource != null)
-            {
+			if (chipSource != null)
+			{
 				inBounds = bounds.PointInBounds(InputHelper.MousePosWorld);
-                pressed = inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
-                uint displayColIndex = chipSource.InternalState[0];
-                col = GetStateColour(pressed, displayColIndex);
+				pressed = inBounds && InputHelper.IsMouseHeld(MouseButton.Left) && controller.CanInteractWithButton;
+				uint displayColIndex = chipSource.InternalState[0];
+				col = GetStateColour(pressed, displayColIndex);
 				chipSource.OutputPins[0].State.SmallSet(pressed ? Constants.LOGIC_HIGH : Constants.LOGIC_LOW);
-            }
+			}
 
-            Vector2 buttonDrawSize = Vector2.one * (scale * buttonSize);
-            Draw.Squircle(centre, Vector2.one * scale, 0.15f * scale, ActiveTheme.DevPinHandle);
-            Draw.Squircle(centre, buttonDrawSize, 0.15f * scale * buttonSize, col);
+			Vector2 buttonDrawSize = Vector2.one * (scale * buttonSize);
+			Draw.Squircle(centre, Vector2.one * scale, 0.15f * scale, ActiveTheme.DevPinHandle);
+			Draw.Squircle(centre, buttonDrawSize, 0.15f * scale * buttonSize, col);
 
-            return (bounds, inBounds, pressed);
-        }
+			return (bounds, inBounds, pressed);
+		}
 
         public static (Bounds2D bounds, bool inBounds, bool clicked) DrawInteractable_Toggle(Vector2 centre, float scale, SimChip chipSource)
         {
