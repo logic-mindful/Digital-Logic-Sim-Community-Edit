@@ -42,6 +42,7 @@ namespace DLS.Game
 				// ---- Displays ----
 				CreateDisplay7Seg(),
 				CreateDisplayRGB(),
+				CreateDisplayRGBTouch(),
 				CreateDisplayDot(),
 				CreateDisplayLED(),
 				// ---- Audio ----
@@ -469,6 +470,49 @@ namespace DLS.Game
 			};
 
 			return CreateBuiltinChipDescription(ChipType.DisplayRGB, size, col, inputPins, outputPins, displays, NameDisplayLocation.Hidden);
+		}
+
+		static ChipDescription CreateDisplayRGBTouch()
+		{
+			float height = GridSize * 21;
+			float width = height;
+			float displayWidth = height - GridSize * 2;
+
+			Color col = GetColor(new(0.1f, 0.1f, 0.1f));
+			Vector2 size = new(width, height);
+
+			PinDescription[] inputPins =
+			{
+				CreatePinDescription("ADDRESS", 0, PinBitCount.Bit8),
+				CreatePinDescription("RED", 1, PinBitCount.Bit4),
+				CreatePinDescription("GREEN", 2, PinBitCount.Bit4),
+				CreatePinDescription("BLUE", 3, PinBitCount.Bit4),
+				CreatePinDescription("RESET", 4),
+				CreatePinDescription("WRITE", 5),
+				CreatePinDescription("REFRESH", 6),
+				CreatePinDescription("CLOCK", 7)
+			};
+
+			PinDescription[] outputPins =
+			{
+				CreatePinDescription("R OUT", 8, PinBitCount.Bit4),
+				CreatePinDescription("G OUT", 9, PinBitCount.Bit4),
+				CreatePinDescription("B OUT", 10, PinBitCount.Bit4),
+				CreatePinDescription("TOUCH POS", 11, PinBitCount.Bit8),
+				CreatePinDescription("TOUCHED", 12),
+			};
+
+			DisplayDescription[] displays =
+			{
+				new()
+				{
+					Position = Vector2.zero,
+					Scale = displayWidth,
+					SubChipID = -1
+				}
+			};
+
+			return CreateBuiltinChipDescription(ChipType.DisplayRGBTouch, size, col, inputPins, outputPins, displays, NameDisplayLocation.Hidden);
 		}
 
 		static ChipDescription CreateDisplayDot()

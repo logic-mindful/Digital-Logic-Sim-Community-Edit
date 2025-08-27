@@ -77,7 +77,7 @@ namespace DLS.Simulation
 			// ---- Initialize internal state ----
 			const int addressSize_8Bit = 256;
 
-			if (ChipType is ChipType.DisplayRGB)
+			if (ChipType is ChipType.DisplayRGB  || ChipType is ChipType.DisplayRGBTouch)
 			{
 				// first 256 bits = display buffer, next 256 bits = back buffer, last bit = clock state (to allow edge-trigger behaviour)
 				InternalState = new uint[addressSize_8Bit * 2 + 1];
@@ -97,7 +97,7 @@ namespace DLS.Simulation
 				{
 					Simulator.rng.NextBytes(randomBytes);
 					InternalState[i] = BitConverter.ToUInt32(randomBytes) & 0x00FF00FF; // Limit to 8 first bits, otherwise the value is too big
-                }
+				}
 			}
 
 			// Load in serialized persistent state (rom data, etc.)
@@ -146,6 +146,7 @@ namespace DLS.Simulation
 				case ChipType.dev_Ram_8Bit:
 				case ChipType.SevenSegmentDisplay:
 				case ChipType.DisplayRGB:
+				case ChipType.DisplayRGBTouch:
 				case ChipType.DisplayDot:
 				case ChipType.DisplayLED:
 				case ChipType.Key:

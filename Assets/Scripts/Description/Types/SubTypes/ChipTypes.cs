@@ -21,6 +21,7 @@ namespace DLS.Description
 		DisplayRGB,
 		DisplayDot,
 		DisplayLED,
+		DisplayRGBTouch,
 
 		// ---- Merge / Split ----
 		Merge_Pin,

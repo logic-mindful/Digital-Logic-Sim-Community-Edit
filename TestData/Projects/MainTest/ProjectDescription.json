@@ -2,21 +2,21 @@
   "ProjectName": "MainTest",
   "DLSVersion_LastSaved": "2.1.6",
   "DLSVersion_EarliestCompatible": "2.0.0",
-  "DLSVersion_LastSavedModdedVersion": "1.1.1",
-  "CreationTime": "2025-03-14T18:23:30.404+01:00",
-  "LastSaveTime": "2025-08-05T23:04:14.047+02:00",
+  "DLSVersion_LastSavedModdedVersion": "1.1.2",
+  "CreationTime": "2025-03-15T00:23:30.404+07:00",
+  "LastSaveTime": "2025-08-27T17:46:49.259+07:00",
   "Prefs_MainPinNamesDisplayMode": 2,
   "Prefs_ChipPinNamesDisplayMode": 1,
   "Prefs_GridDisplayMode": 1,
   "Prefs_Snapping": 0,
   "Prefs_StraightWires": 0,
   "Prefs_SimPaused": false,
-  "Prefs_SimTargetStepsPerSecond": 15,
+  "Prefs_SimTargetStepsPerSecond": 60,
   "Prefs_SimStepsPerClockTick": 6,
   "Perfs_PinIndicators": 4,
-  "StepsRanSinceCreated": 105864423,
+  "StepsRanSinceCreated": 105941287,
   "TimeSpentSinceCreated": {
-    "StartFrom": "02:51:34.8349194"
+    "StartFrom": "03:24:52.5203512"
   },
   "AllCustomChipNames":[
     "AND",
@@ -121,7 +121,7 @@
       "Name":"MERGE/SPLIT"
     },
     {
-      "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED"],
+      "Chips":["7-SEGMENT","DECIMAL-4","DECIMAL-8","DOT DISPLAY","RGB DISPLAY","LED","TOUCHSCREEN RGB DISPLAY"],
       "IsToggledOpen":true,
       "Name":"DISPLAY"
     },

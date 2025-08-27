@@ -17,11 +17,16 @@ namespace DLS.Graphics
 		public static readonly Vector2 settingFieldSize = new(entrySize.x / 3, entrySize.y);
 
 		static string collection;
+		static int numOfChipsInCollection;
 
 		// ---- Stats ----
 		static readonly string numOfChipsLabel = "Number of chips";
 
-		public static void SetCollection(string collection) => CollectionStatsMenu.collection = collection;
+		public static void SetCollection(string collection)
+		{
+			CollectionStatsMenu.collection = collection;
+			numOfChipsInCollection = GetCollectionChipsLength();
+		}
 		public static void DrawMenu()
 		{
 			DrawSettings.UIThemeDLS theme = DrawSettings.ActiveUITheme;
@@ -39,7 +44,7 @@ namespace DLS.Graphics
 				// Draw stats
 				Vector2 numOfChipsLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, numOfChipsLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(numOfChipsLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetCollectionChipsLength().ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				UI.DrawText(numOfChipsInCollection.ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 
 				// Draw close
 				Vector2 buttonTopLeft = new(50, UI.PrevBounds.Bottom - 1 * (DrawSettings.DefaultButtonSpacing * 6));

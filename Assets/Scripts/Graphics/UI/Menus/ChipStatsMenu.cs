@@ -21,6 +21,10 @@ namespace DLS.Graphics
 		static string chip;
 
 		// ---- Stats ----
+		static uint uses;
+		static int totalUses;
+		static int usedBy;
+		static int numOfChipsInChip;
 		static readonly string usesLabel = "Uses";
 
 		static readonly string totalUsesLabel = "Total uses";
@@ -30,9 +34,14 @@ namespace DLS.Graphics
 		static readonly string numOfChipsInChipLabel = "Number of chips in this chip";
 
 
-		public static void SetChip(string chip) {
+		public static void SetChip(string chip)
+		{
 			ChipStatsMenu.chip = chip;
 			isChipBuiltIn = Project.ActiveProject.chipLibrary.IsBuiltinChip(chip);
+			uses = GetChipUses();
+			totalUses = GetChipUsesTotal();
+			usedBy = GetChipUsedBy();
+			numOfChipsInChip = GetNumOfChipsInChip();
 		}
 		static bool isChipBuiltIn;
 		public static void DrawMenu()
@@ -52,23 +61,23 @@ namespace DLS.Graphics
 				// Draw stats
 				Vector2 usesLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, usesLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(usesLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetChipUses().ToString(), theme.FontBold, theme.FontSizeRegular, usesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				UI.DrawText(uses.ToString(), theme.FontBold, theme.FontSizeRegular, usesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 
 				Vector2 usedByLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, usedByLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(usedByLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetChipUsedBy().ToString(), theme.FontBold, theme.FontSizeRegular, usedByLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				UI.DrawText(usedBy.ToString(), theme.FontBold, theme.FontSizeRegular, usedByLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				AddSpacing();
 				
 				Vector2 totalUsesLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, totalUsesLabel, labelCol * 0.75f, true);
 				UI.DrawPanel(totalUsesLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-				UI.DrawText(GetChipUsesTotal().ToString(), theme.FontBold, theme.FontSizeRegular, totalUsesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+				UI.DrawText(totalUses.ToString(), theme.FontBold, theme.FontSizeRegular, totalUsesLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				
 				if (!isChipBuiltIn) {
 					AddSpacing();
 					Vector2 numOfChipsInChipLabelRight = MenuHelper.DrawLabelSectionOfLabelInputPair(labelPosCurr, entrySize, numOfChipsInChipLabel, labelCol * 0.75f, true);
 					UI.DrawPanel(numOfChipsInChipLabelRight, settingFieldSize, new Color(0.18f, 0.18f, 0.18f), Anchor.CentreRight);
-					UI.DrawText(GetNumOfChipsInChip().ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsInChipLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
+					UI.DrawText(numOfChipsInChip.ToString(), theme.FontBold, theme.FontSizeRegular, numOfChipsInChipLabelRight + new Vector2(inputTextPad - settingFieldSize.x, 0), Anchor.TextCentreLeft, Color.white);
 				}
 
 				// Draw close
