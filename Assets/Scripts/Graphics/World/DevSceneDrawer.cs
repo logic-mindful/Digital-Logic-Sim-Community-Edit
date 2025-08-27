@@ -681,7 +681,7 @@ namespace DLS.Graphics
 
 					Vector2 pos = bottomLeft + Vector2.one * pixelSize / 2 + Vector2.right * (pixelSize * x) + Vector2.up * (pixelSize * y);
 					Draw.Quad(pos, pixelDrawSize, col);
-					Bounds2D pixelBounds = Bounds2D.CreateFromCentreAndSize(pos, pixelDrawSize);
+					Bounds2D pixelBounds = Bounds2D.CreateFromCentreAndSize(pos, pixelDrawSize * 1.08f); // slightly larger bounds for easier clicking
 
 					if (simSource != null)
 					{
